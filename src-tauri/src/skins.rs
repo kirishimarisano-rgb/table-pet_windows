@@ -14,9 +14,56 @@ use std::path::PathBuf;
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
-/// 內建預設造型直接編進程式裡：就算安裝目錄找不到 skins/ 資料夾，柑柑也一定能出現
-const EMBEDDED_MANIFEST: &str = include_str!("../../skins/default/manifest.json");
-const EMBEDDED_SPRITE: &[u8] = include_bytes!("../../skins/default/sprite.png");
+/// 內建角色直接編進程式裡：就算安裝目錄找不到 skins/ 資料夾，內建角色也一定能出現
+pub struct Builtin {
+    pub id: &'static str,
+    pub manifest: &'static str,
+    pub sprite: &'static [u8],
+    /// 角色專屬台詞：(語言, 內容)
+    pub lines: &'static [(&'static str, &'static str)],
+}
+
+pub const BUILTINS: &[Builtin] = &[
+    Builtin {
+        id: "default",
+        manifest: include_str!("../../skins/default/manifest.json"),
+        sprite: include_bytes!("../../skins/default/sprite.png"),
+        lines: &[],
+    },
+    Builtin {
+        id: "kanade",
+        manifest: include_str!("../../skins/kanade/manifest.json"),
+        sprite: include_bytes!("../../skins/kanade/sprite.png"),
+        lines: &[
+            ("zh-TW", include_str!("../../skins/kanade/lines/zh-TW.json")),
+            ("ja", include_str!("../../skins/kanade/lines/ja.json")),
+            ("en", include_str!("../../skins/kanade/lines/en.json")),
+        ],
+    },
+    Builtin {
+        id: "shiori",
+        manifest: include_str!("../../skins/shiori/manifest.json"),
+        sprite: include_bytes!("../../skins/shiori/sprite.png"),
+        lines: &[
+            ("zh-TW", include_str!("../../skins/shiori/lines/zh-TW.json")),
+            ("ja", include_str!("../../skins/shiori/lines/ja.json")),
+            ("en", include_str!("../../skins/shiori/lines/en.json")),
+        ],
+    },
+];
+
+pub fn builtin(id: &str) -> Option<&'static Builtin> {
+    BUILTINS.iter().find(|b| b.id == id)
+}
+
+/// 編進程式裡的角色專屬台詞
+pub fn builtin_lines(id: &str, lang: &str) -> Option<&'static str> {
+    builtin(id)?.lines.iter().find(|(l, _)| *l == lang).map(|(_, text)| *text)
+}
+
+fn builtin_manifest(b: &Builtin) -> Value {
+    serde_json::from_str(b.manifest).unwrap_or_default()
+}
 
 /// 支援的圖片格式
 const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "webp", "gif"];
@@ -121,16 +168,18 @@ pub fn list(app: &AppHandle) -> Vec<SkinInfo> {
             skins.push(info);
         }
     }
-    // 資料夾裡找不到預設造型時，補上內建的那一個
-    if !skins.iter().any(|s| s.id == "default") {
-        let m: Value = serde_json::from_str(EMBEDDED_MANIFEST).unwrap_or_default();
-        skins.push(SkinInfo {
-            id: "default".into(),
-            name: "柑柑（預設）".into(),
-            author: "desk-pet".into(),
-            names: m["names"].clone(),
-            user: false,
-        });
+    // 資料夾裡找不到的內建角色，用編進程式裡的那一份補上
+    for b in BUILTINS {
+        if !skins.iter().any(|s| s.id == b.id) {
+            let m = builtin_manifest(b);
+            skins.push(SkinInfo {
+                id: b.id.into(),
+                name: m["name"].as_str().unwrap_or(b.id).to_string(),
+                author: m["author"].as_str().unwrap_or("").to_string(),
+                names: m["names"].clone(),
+                user: false,
+            });
+        }
     }
     // 預設造型排第一，其餘照名字排
     skins.sort_by(|a, b| (a.id != "default").cmp(&(b.id != "default")).then(a.name.cmp(&b.name)));
@@ -147,10 +196,10 @@ pub fn list_skins(app: AppHandle) -> Vec<SkinInfo> {
 ///   圖片模式：  images = { "idle": …, "walk": …, … }（manifest 的 images 欄位列出各動作的檔名）
 #[tauri::command]
 pub fn load_skin(app: AppHandle, id: String) -> Result<Value, String> {
-    let Some(dir) = find_skin_dir(&app, &id).or_else(|| find_skin_dir(&app, "default")) else {
-        // 硬碟上完全找不到造型 → 使用編進程式裡的預設造型
-        let manifest: Value = serde_json::from_str(EMBEDDED_MANIFEST).map_err(|e| e.to_string())?;
-        return Ok(json!({ "manifest": manifest, "images": { "sheet": to_data_url(EMBEDDED_SPRITE) } }));
+    // 硬碟上找不到 → 如果是內建角色，用編進程式裡的那一份；都不是就用柑柑
+    let Some(dir) = find_skin_dir(&app, &id) else {
+        let b = builtin(&id).unwrap_or(&BUILTINS[0]);
+        return Ok(json!({ "manifest": builtin_manifest(b), "images": { "sheet": to_data_url(b.sprite) } }));
     };
     let manifest = read_manifest(&dir).ok_or("manifest.json 格式錯誤")?;
     let read = |name: &str| -> Result<String, String> {
@@ -196,7 +245,7 @@ fn new_skin_id(app: &AppHandle, name: &str) -> Result<(String, PathBuf), String>
     for n in 0..1000 {
         let id = if n == 0 { base.clone() } else { format!("{base}-{n}") };
         let dir = root.join(&id);
-        if !dir.exists() && find_skin_dir(app, &id).is_none() {
+        if !dir.exists() && find_skin_dir(app, &id).is_none() && builtin(&id).is_none() {
             return Ok((id, dir));
         }
     }
@@ -332,9 +381,9 @@ pub fn delete_skin(app: AppHandle, id: String) -> Result<(), String> {
 
 /// 目前造型的角色個性（manifest.json 的 persona.<語言>），沒有就回傳 None
 pub fn persona(app: &AppHandle, id: &str, lang: &str) -> Option<String> {
-    let manifest = match find_skin_dir(app, id).or_else(|| find_skin_dir(app, "default")) {
+    let manifest = match find_skin_dir(app, id) {
         Some(dir) => read_manifest(&dir)?,
-        None => serde_json::from_str(EMBEDDED_MANIFEST).ok()?,
+        None => builtin_manifest(builtin(id).unwrap_or(&BUILTINS[0])),
     };
     manifest["persona"][lang].as_str().map(str::to_string)
 }

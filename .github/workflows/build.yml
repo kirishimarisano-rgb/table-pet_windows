@@ -48,6 +48,12 @@ jobs:
       - name: 建置（產生 .exe 與 .msi）
         run: npx tauri build
 
+      - name: 檢查安裝檔裡的內建角色與台詞
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
+          7z l $setup.FullName | Select-String -Pattern "skins|lines"
+
       - name: 上傳安裝檔
         uses: actions/upload-artifact@v4
         with:

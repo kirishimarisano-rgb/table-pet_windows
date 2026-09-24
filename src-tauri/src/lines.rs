@@ -5,7 +5,7 @@
 //!      （第一次使用時從內建版本複製過去，之後使用者可以直接編輯）
 //!   2. 角色專屬台詞：造型資料夾裡的 lines/<語言>.json（沒有就跳過）
 
-use crate::skins::find_skin_dir;
+use crate::skins::{builtin_lines, find_skin_dir};
 use crate::storage::data_dir;
 use serde_json::{Map, Value};
 use std::fs;
@@ -69,13 +69,16 @@ pub fn get_lines(app: AppHandle, lang: String, skin: String) -> Result<Value, St
     let lang = normalize_lang(&lang);
     let mut lines = read_obj(&user_lines_file(&app, lang)?)?;
 
-    if let Some(dir) = find_skin_dir(&app, &skin) {
-        let skin_file = dir.join("lines").join(format!("{lang}.json"));
-        if skin_file.exists() {
-            for (k, v) in read_obj(&skin_file)? {
-                lines.insert(k, v);
-            }
+    // 角色專屬台詞：先找角色資料夾，找不到再用編進程式裡的內建角色台詞
+    let skin_lines = match find_skin_dir(&app, &skin) {
+        Some(dir) => {
+            let skin_file = dir.join("lines").join(format!("{lang}.json"));
+            if skin_file.exists() { Some(read_obj(&skin_file)?) } else { None }
         }
+        None => builtin_lines(&skin, lang).and_then(|text| serde_json::from_str::<Map<String, Value>>(text).ok()),
+    };
+    for (k, v) in skin_lines.unwrap_or_default() {
+        lines.insert(k, v);
     }
     Ok(Value::Object(lines))
 }
