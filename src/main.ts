@@ -2,21 +2,25 @@
 // 桌寵主視窗：把各個模組接起來
 //
 //   animator     畫圖
-//   stateMachine 決定現在要做什麼（閒置／走路／睡覺／拖曳／反應）
+//   stateMachine 決定現在要做什麼（閒置／走路／睡覺／拖曳／反應／思考）
 //   movement     移動視窗
 //   activity     判斷使用者在忙還是離開
-//   lines        台詞
+//   lines        台詞（依語言＋角色）
 //   pomodoro     番茄鐘
 //   reminders    提醒
-//   chat         Claude 對話（沒金鑰時隱藏）
+//   stats        好感度、餵食
+//   petting      摸頭偵測
+//   chat         Claude 對話（沒金鑰時隱藏，或改用 Claude app）
 // =============================================================
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-import { api } from "./common/api";
+import { api, type ChatReply } from "./common/api";
 import { EV } from "./common/events";
+import { applyI18n, setLang, t } from "./common/i18n";
 import { Lines } from "./common/lines";
 import { loadSettings, type Settings } from "./common/settings";
+import { todayStr, type Todo } from "./common/types";
 import { Animator } from "./pet/animator";
 import { PetStateMachine, type PetState } from "./pet/stateMachine";
 import { Mover } from "./pet/movement";
@@ -24,6 +28,8 @@ import { startClickThrough } from "./pet/clickthrough";
 import { ActivityMonitor } from "./pet/activity";
 import { Pomodoro, formatTime, type PomoStatus } from "./pet/pomodoro";
 import { startReminderCheck } from "./pet/reminders";
+import { StatsStore } from "./pet/stats";
+import { setupPetting } from "./pet/petting";
 import { SpeechBubble } from "./bubble/speech";
 import { ChatPanel } from "./bubble/chat";
 
@@ -31,11 +37,14 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 // ---------- 模組 ----------
 let settings: Settings;
+let todos: Todo[] = [];
 const lines = new Lines();
+const stats = new StatsStore();
 const animator = new Animator($("pet"));
 const mover = new Mover();
 const speech = new SpeechBubble($("bubble"));
 const pomoBadge = $("pomo");
+const menu = $("menu");
 
 const sm = new PetStateMachine((state: PetState) => {
   animator.play(state);
@@ -52,10 +61,16 @@ const activity = new ActivityMonitor((next, prev) => {
   }
 });
 
-let chatAllowed = false;
+/** 聊天泡泡能不能用：有金鑰 → api；沒金鑰但開了聯動 → handoff；都沒有 → null（隱藏） */
+let chatMode: "api" | "handoff" | null = null;
 const chat = new ChatPanel($("chat"), {
-  onThinking: () => sm.set("idle"),
-  onReply: () => sm.react(),
+  getContext: buildContext,
+  onThinking: () => sm.set("think"),
+  onReply: (r: ChatReply) => {
+    sm.react();
+    if (r.todoDone) void onTodoDone();
+  },
+  onError: () => sm.set("idle"),
 });
 
 const pomodoro = new Pomodoro(
@@ -63,12 +78,12 @@ const pomodoro = new Pomodoro(
   (finished) => {
     if (finished === "work") {
       say("pomodoro_break");
-      notify("番茄鐘", "專注時間結束，休息一下吧喵～");
+      notify(t("notify.pomoTitle"), t("notify.workDone"));
       sm.react();
       if (settings.pomodoro.autoBreak) pomodoro.start("break", settings.pomodoro.breakMin);
     } else {
       say("pomodoro_break_end");
-      notify("番茄鐘", "休息結束囉喵！");
+      notify(t("notify.pomoTitle"), t("notify.breakDone"));
     }
   },
 );
@@ -92,6 +107,28 @@ function autoTalk(): void {
   if (Date.now() - lastTalk < settings.talkIntervalMin * 60_000) return;
   if (Lines.isLateNight() && Math.random() < 0.6) say("late_night");
   else say(activity.level === "busy" ? "busy" : "idle");
+}
+
+// ---------- 給 Claude 的即時資訊 ----------
+function buildContext(): string {
+  const now = new Date();
+  const time = `${todayStr(now)} ${now.toTimeString().slice(0, 5)} (${now.toLocaleDateString("en", { weekday: "short" })})`;
+  const p = pomodoro.status();
+  const open = todos.filter((x) => !x.done);
+  const doneToday = todos.filter((x) => x.done && x.doneAt?.startsWith(todayStr(now))).length;
+  return [
+    `Local time: ${time}`,
+    `User activity: ${activity.level}`,
+    `Pomodoro: ${p.phase === "off" ? "off" : `${p.phase}, ${formatTime(p.remainingSec)} left`}`,
+    `Friendship level: ${stats.level}/4`,
+    `Open to-dos (${open.length}):`,
+    ...open.slice(0, 30).map((x) => `- [id=${x.id}] ${x.text}`),
+    `Completed today: ${doneToday}`,
+  ].join("\n");
+}
+
+async function reloadTodos(): Promise<void> {
+  todos = (await api.loadData<Todo[]>("todos")) ?? [];
 }
 
 // ---------- 系統通知 ----------
@@ -132,7 +169,90 @@ function pomodoroCommand(cmd: string): void {
   }
 }
 
+// ---------- 互動：好感度 ----------
+async function onTodoDone(allDone = false): Promise<void> {
+  sm.wake();
+  sm.react();
+  say(allDone ? "todo_all_done" : "todo_done");
+  if (await stats.addAffection(1)) setTimeout(() => say("love_up"), 3000);
+  await reloadTodos();
+}
+
+async function feed(): Promise<void> {
+  sm.wake();
+  const r = await stats.feed();
+  if (r === "full") {
+    say("feed_full");
+    return;
+  }
+  sm.react();
+  say(r === "levelUp" ? "love_up" : "feed");
+  showSnack();
+}
+
+/** 點心掉下來的小動畫 */
+function showSnack(): void {
+  const el = document.createElement("div");
+  el.className = "snack";
+  el.textContent = ["🍪", "🍡", "🍮", "🍓"][Math.floor(Math.random() * 4)];
+  $("pet-wrap").appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+async function onPetted(): Promise<void> {
+  if (sm.state === "drag") return;
+  sm.wake();
+  sm.react();
+  say("pet");
+  if (await stats.addAffection(1)) setTimeout(() => say("love_up"), 2500);
+}
+
+// ---------- 右鍵小選單 ----------
+function showMenu(): void {
+  menu.querySelector<HTMLElement>("[data-action=chat]")!.classList.toggle("hidden", chatMode === null);
+  menu.querySelector<HTMLElement>("[data-action=pomodoro]")!.textContent =
+    "🍅 " + t(pomodoro.phase === "off" ? "menu.pomodoro" : "menu.pomodoroStop");
+  menu.classList.remove("hidden");
+  speech.hide();
+}
+
+function setupMenu(): void {
+  menu.addEventListener("click", (e) => {
+    const action = (e.target as HTMLElement).closest<HTMLElement>("[data-action]")?.dataset.action;
+    menu.classList.add("hidden");
+    switch (action) {
+      case "chat": openChat(); break;
+      case "feed": void feed(); break;
+      case "pomodoro": pomodoroCommand(pomodoro.phase === "off" ? "work" : "stop"); break;
+      case "claude": void api.openInClaude(""); break;
+      case "settings": void api.openSettings(); break;
+    }
+  });
+  // 點其他地方就關掉選單
+  document.addEventListener("pointerdown", (e) => {
+    if (!menu.contains(e.target as Node)) menu.classList.add("hidden");
+  });
+}
+
+function relabelMenu(): void {
+  const labels: Record<string, string> = {
+    chat: "💬 " + t("menu.chat"),
+    feed: "🍪 " + t("menu.feed"),
+    pomodoro: "🍅 " + t("menu.pomodoro"),
+    claude: "✳ " + t("menu.claude"),
+    settings: "⚙ " + t("menu.settings"),
+  };
+  menu.querySelectorAll<HTMLElement>("[data-action]").forEach((b) => (b.textContent = labels[b.dataset.action!]));
+}
+
 // ---------- 點擊與拖曳 ----------
+function openChat(): void {
+  if (!chatMode) return;
+  chat.open();
+  speech.hide();
+  void getCurrentWindow().setFocus();
+}
+
 function setupPointer(canvas: HTMLElement): void {
   let down: { sx: number; sy: number; wx: number; wy: number } | null = null;
   let dragging = false;
@@ -152,6 +272,7 @@ function setupPointer(canvas: HTMLElement): void {
     const dy = (e.screenY - down.sy) * dpr;
     if (!dragging && Math.hypot(dx, dy) > 5 * dpr) {
       dragging = true;
+      menu.classList.add("hidden");
       sm.startDrag();
       say("drag");
     }
@@ -171,10 +292,10 @@ function setupPointer(canvas: HTMLElement): void {
     }
   });
 
-  // 右鍵：打開設定
+  // 右鍵：小選單
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
-    void api.openSettings();
+    showMenu();
   });
 
   isDragging = () => down !== null;
@@ -187,45 +308,61 @@ function onClick(): void {
     say("away_return");
     return;
   }
-  sm.react();
-  if (chatAllowed) {
-    chat.toggle();
-    if (chat.isOpen) {
-      speech.hide();
-      void getCurrentWindow().setFocus();
-    }
+  if (sm.state !== "think") sm.react();
+  if (chatMode) {
+    chat.isOpen ? chat.close() : openChat();
   } else {
     say("click");
   }
 }
 
-// ---------- 讀取設定、造型、金鑰 ----------
+// ---------- 讀取設定、造型、台詞、金鑰 ----------
 async function applySkin(id: string): Promise<void> {
   try {
     const skin = await api.loadSkin(id);
     await animator.setSkin(skin.manifest, skin.image, settings.petScale);
   } catch (e) {
-    speech.show(`造型載入失敗喵：${e}`, 15000);
+    speech.show(t("err.skin") + e, 15000);
     // 自訂造型壞掉的話，退回預設造型
     if (id !== "default") await applySkin("default");
   }
 }
 
+async function reloadLines(): Promise<void> {
+  await lines.load(settings.language, settings.skin);
+  if (lines.error) speech.show(t("err.lines") + lines.error, 20000);
+}
+
+function applyLanguage(): void {
+  setLang(settings.language);
+  applyI18n();
+  chat.relabel();
+  relabelMenu();
+}
+
 async function reloadSettings(): Promise<void> {
-  const prevSkin = settings?.skin;
-  const prevScale = settings?.petScale;
+  const prev = settings;
   settings = await loadSettings();
   activity.thresholds = { ...settings.activity };
-  if (settings.skin !== prevSkin) await applySkin(settings.skin);
-  else if (settings.petScale !== prevScale) animator.setScale(settings.petScale);
+  if (settings.language !== prev?.language) applyLanguage();
+  if (settings.skin !== prev?.skin) await applySkin(settings.skin);
+  else if (settings.petScale !== prev?.petScale) animator.setScale(settings.petScale);
+  if (settings.language !== prev?.language || settings.skin !== prev?.skin) {
+    await reloadLines();
+    chat.reset(); // 換角色或語言，就開新的對話
+    await api.refreshTray();
+  }
   await refreshChatAvailability();
 }
 
-/** 沒有金鑰（或關掉功能）→ 對話泡泡完全隱藏 */
 async function refreshChatAvailability(): Promise<void> {
   const hasKey = await api.hasApiKey().catch(() => false);
-  chatAllowed = hasKey && settings.claude.enabled;
-  if (!chatAllowed) chat.reset();
+  const next = hasKey && settings.claude.enabled ? "api" : !hasKey && settings.claude.handoff ? "handoff" : null;
+  if (next !== chatMode) {
+    chatMode = next;
+    chat.mode = next ?? "api";
+    chat.reset();
+  }
 }
 
 // ---------- 主迴圈 ----------
@@ -234,9 +371,9 @@ function loop(): void {
   const frame = (now: number) => {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
-    sm.update(dt, { activity: activity.level, walkEnabled: settings.walkEnabled && !chat.isOpen });
+    sm.update(dt, { activity: activity.level, walkEnabled: settings.walkEnabled && !chat.isOpen && menu.classList.contains("hidden") });
     if (sm.state === "walk") mover.step(dt);
-    animator.flipped = sm.state === "walk" ? mover.dir > 0 : animator.flipped;
+    if (sm.state === "walk") animator.flipped = mover.dir > 0;
     animator.tick(dt);
     requestAnimationFrame(frame);
   };
@@ -247,18 +384,24 @@ function loop(): void {
 async function main(): Promise<void> {
   settings = await loadSettings();
   activity.thresholds = { ...settings.activity };
-  await Promise.all([lines.load(), applySkin(settings.skin), mover.init(), refreshChatAvailability()]);
+  applyLanguage();
+  await Promise.all([reloadLines(), applySkin(settings.skin), mover.init(), refreshChatAvailability(), stats.load(), reloadTodos()]);
 
   setupPointer($("pet"));
-  startClickThrough(() => ({ x: mover.x, y: mover.y }), () => isDragging() || chat.isOpen);
+  setupPetting($("pet"), () => void onPetted());
+  setupMenu();
+  startClickThrough(
+    () => ({ x: mover.x, y: mover.y }),
+    () => isDragging() || chat.isOpen || !menu.classList.contains("hidden"),
+  );
   activity.start();
   startReminderCheck((r) => {
-    const prefix = lines.pick("reminder") ?? "提醒：";
+    const prefix = lines.pick("reminder") ?? "";
     sm.wake();
     sm.react();
     speech.show(`${prefix}${r.text}`, 15000);
     lastTalk = Date.now();
-    void notify("柑柑提醒你", r.text);
+    void notify(t("notify.reminderTitle"), r.text);
   });
   setInterval(autoTalk, 20_000);
   loop();
@@ -268,27 +411,25 @@ async function main(): Promise<void> {
 
   // ---------- 其他視窗／托盤送來的事件 ----------
   await listen(EV.settingsChanged, () => void reloadSettings());
-  await listen<string>(EV.skinChanged, async (e) => {
-    settings.skin = e.payload;
-    await applySkin(e.payload);
+  await listen<string>(EV.skinChanged, async () => {
+    await reloadSettings();
     sm.react();
+    say("greeting");
   });
   await listen<string>(EV.petSay, (e) => {
     sm.wake();
     sm.react();
     say(e.payload);
   });
-  await listen<{ allDone: boolean }>(EV.todoDone, (e) => {
-    sm.wake();
-    sm.react();
-    say(e.payload.allDone ? "todo_all_done" : "todo_done");
-  });
+  await listen<{ allDone: boolean }>(EV.todoDone, (e) => void onTodoDone(e.payload.allDone));
+  await listen(EV.todosChanged, () => void reloadTodos());
+  await listen(EV.petFeed, () => void feed());
   await listen<string>(EV.pomodoroCommand, (e) => pomodoroCommand(e.payload));
   await listen(EV.apiKeyChanged, () => void refreshChatAvailability());
-  await listen(EV.linesChanged, () => void lines.load());
+  await listen(EV.linesChanged, () => void reloadLines());
 }
 
 main().catch((e) => {
   console.error(e);
-  speech.show(`啟動失敗喵：${e}`, 60000);
+  speech.show(t("err.start") + e, 60000);
 });
