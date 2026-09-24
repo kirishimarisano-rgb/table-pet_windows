@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "柑柑",
+        "title": "desk-pet",
         "url": "index.html",
         "width": 260,
         "height": 260,
@@ -39,7 +39,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../lines.json": "lines.json",
+      "../lines/": "lines/",
       "../skins/": "skins/"
     }
   }

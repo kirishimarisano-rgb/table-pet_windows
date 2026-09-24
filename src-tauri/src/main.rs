@@ -21,6 +21,12 @@ mod tray;
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_opener::init())
+        // 開機自動啟動（在設定裡開關）
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             tray::setup(app.handle())?;
             Ok(())
@@ -38,6 +44,7 @@ fn main() {
             claude::set_api_key,
             claude::clear_api_key,
             claude::claude_chat,
+            claude::open_in_claude,
             tray::open_settings_window,
             tray::select_skin,
             tray::refresh_tray,
