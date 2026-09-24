@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
-    "gen:skin": "node scripts/gen-default-skin.mjs"
+    "gen:skin": "node scripts/gen-default-skin.mjs",
+    "check:privacy": "node scripts/check-privacy.mjs",
+    "setup-hooks": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",

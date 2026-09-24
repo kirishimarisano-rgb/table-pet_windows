@@ -40,7 +40,8 @@
     ],
     "resources": {
       "../lines/": "lines/",
-      "../skins/": "skins/"
+      "../skins/default/": "skins/default/",
+      "../skins/kanade/": "skins/kanade/"
     }
   }
 }

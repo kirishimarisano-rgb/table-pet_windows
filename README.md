@@ -255,10 +255,11 @@ my-skin/
 
 ### 放在哪裡？
 
-- **方法 A：不用重新建置（推薦）**。把資料夾放進 `%APPDATA%\tw.deskpet.kankan\skins\`，
-  在設定視窗的「造型」分頁按「重新掃描」，再從托盤或設定視窗切換
-- **方法 B：跟程式一起打包**。放進 repo 的 `skins/` 資料夾，再重新建置。
-  除了 `skins/default/`，其他造型都已經寫進 `.gitignore`，不會被上傳到 GitHub
+把角色資料夾放進 `%APPDATA%\tw.deskpet.kankan\skins\`，在設定視窗的「角色」分頁按「重新掃描」，
+再從托盤或設定視窗切換就好，不用重新建置。
+
+> 私人角色**只放在這裡**。安裝檔只會包進公開的內建角色（`skins/default`、`skins/kanade`），
+> 就算你把私人角色放在 repo 的 `skins/` 裡，它也不會被打包、不會被 commit（見下方「公開與私人怎麼分開」）。
 
 資料夾名稱就是造型 id，只能用英文、數字、`-` 和 `_`。
 
@@ -381,12 +382,32 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 
 大家安裝的是同一個程式。你私人的東西都在自己電腦上，不會進 repo：
 
-| 公開（在 repo 裡） | 只在你電腦上 |
+| 公開（在 repo 裡） | 只在你電腦上（`%APPDATA%\tw.deskpet.kankan\`） |
 |---|---|
-| 程式、柑柑、小奏、預設台詞 | 你自己加的角色（`%APPDATA%\tw.deskpet.kankan\skins\`，或 repo 的 `skins/` 裡被 `.gitignore` 排除的資料夾） |
-| | 你改過的台詞、設定、待辦、API 金鑰 |
+| 程式、柑柑、小奏、預設台詞 | 你自己加的角色、你改過的台詞、設定、待辦、好感度、API 金鑰 |
 
-所以只要把自己的角色和台詞放在上面那些地方，就是「你的版本」，不用維護兩份程式碼。
+所以只要把自己的角色和台詞放在右邊那個資料夾，就是「你的版本」，不用維護兩份程式碼。
+
+### 公開與私人怎麼分開（安全機制）
+
+一共有五層保護，任何一層擋下來就不會外流：
+
+1. **放的位置**：私人資料都在 `%APPDATA%`，根本不在 repo 資料夾裡
+2. **`.gitignore`**：`skins/` 裡只有 `default`、`kanade` 會被 git 追蹤；`secrets.json`、`.env` 一律忽略
+3. **commit 前自動檢查**：在自己電腦上執行一次 `npm run setup-hooks`，之後每次 commit 都會跑
+   `scripts/check-privacy.mjs`。它會擋下三種東西：私人角色、金鑰檔，以及內容裡有 `sk-ant-` 金鑰的檔案
+4. **GitHub Actions 檢查**：每次 push 都會先跑同一個隱私檢查，沒通過就不打包
+5. **安裝檔只包公開角色**：`tauri.conf.json` 只列出 `skins/default`、`skins/kanade`，
+   所以就算你在自己電腦上建置，再把安裝檔分享出去，私人角色也不會被包進去
+
+想把某個角色改成公開，要改三個地方：
+
+- `scripts/check-privacy.mjs` 的 `PUBLIC_SKINS`
+- `.gitignore`
+- `src-tauri/tauri.conf.json` 的 `resources`
+
+另外建議在 GitHub repo 的 **Settings → Code security** 打開 **Secret scanning** 和 **Push protection**。
+這樣萬一金鑰被 push，GitHub 也會擋下來。
 
 ### 公開發佈的步驟
 

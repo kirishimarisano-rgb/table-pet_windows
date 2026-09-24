@@ -1,0 +1,3 @@
+#!/bin/sh
+# commit 之前自動做隱私檢查（啟用方式：npm run setup-hooks）
+node scripts/check-privacy.mjs --staged

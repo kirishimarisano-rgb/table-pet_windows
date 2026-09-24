@@ -14,7 +14,16 @@ permissions:
   contents: write
 
 jobs:
+  # 先確認沒有私人角色、金鑰被 commit 進來；沒通過就不打包
+  privacy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 隱私檢查
+        run: node scripts/check-privacy.mjs
+
   build-windows:
+    needs: privacy-check
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
