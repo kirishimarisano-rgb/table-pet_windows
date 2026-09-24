@@ -284,9 +284,10 @@ function setupPointer(canvas: HTMLElement): void {
     down = null;
     if (dragging) {
       dragging = false;
+      // 放開後有重力：落在底下的視窗上，或掉回地面
+      await mover.land();
       sm.endDrag();
       say("drop");
-      await mover.settle();
     } else {
       onClick();
     }
@@ -314,6 +315,41 @@ function onClick(): void {
   } else {
     say("click");
   }
+}
+
+// ---------- 坐在其他視窗上 ----------
+function setupPerching(): void {
+  // 每秒：坐著的視窗移動就跟著走；視窗不見了就掉下來
+  setInterval(async () => {
+    if (!mover.perch || mover.airborne || isDragging()) return;
+    if (!(await mover.followPerch())) {
+      sm.startDrag();
+      say("drag");
+      await mover.fall();
+      sm.endDrag();
+      say("drop");
+    }
+  }, 1000);
+
+  // 每 15 秒：有機會跳上目前的視窗，或從視窗跳下來
+  setInterval(async () => {
+    if (!settings.perchEnabled || !settings.walkEnabled) return;
+    if (mover.airborne || isDragging() || chat.isOpen || activity.level === "away") return;
+    if (sm.state !== "idle" && sm.state !== "walk") return;
+    if (mover.perch) {
+      if (Math.random() < 0.15) {
+        sm.set("idle");
+        await mover.fall();
+        sm.react();
+      }
+      return;
+    }
+    if (Math.random() > 0.35) return;
+    const r = await mover.findPerch();
+    if (!r) return;
+    sm.set("react", 1.5);
+    await mover.jumpOnto(r);
+  }, 15_000);
 }
 
 // ---------- 讀取設定、造型、台詞、金鑰 ----------
@@ -390,6 +426,7 @@ async function main(): Promise<void> {
   setupPointer($("pet"));
   setupPetting($("pet"), () => void onPetted());
   setupMenu();
+  setupPerching();
   startClickThrough(
     () => ({ x: mover.x, y: mover.y }),
     () => isDragging() || chat.isOpen || !menu.classList.contains("hidden"),

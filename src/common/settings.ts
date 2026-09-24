@@ -13,6 +13,8 @@ export interface Settings {
   petScale: number;
   /** 會不會自己走來走去 */
   walkEnabled: boolean;
+  /** 會不會跳到其他視窗上面坐著 */
+  perchEnabled: boolean;
   /** 幾分鐘自言自語一次（0 = 不說話） */
   talkIntervalMin: number;
   activity: {
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   skin: "default",
   petScale: 1,
   walkEnabled: true,
+  perchEnabled: true,
   talkIntervalMin: 5,
   activity: { busySec: 30, awaySec: 300 },
   pomodoro: { workMin: 25, breakMin: 5, autoBreak: true },

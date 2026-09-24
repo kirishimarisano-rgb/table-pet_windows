@@ -9,11 +9,13 @@
 //!   lines    台詞檔
 //!   skins    造型
 //!   claude   Claude 對話與 API 金鑰
+//!   perch    坐在其他視窗上（讀取視窗位置）
 //!   tray     托盤選單、設定視窗
 
 mod claude;
 mod idle;
 mod lines;
+mod perch;
 mod skins;
 mod storage;
 mod tray;
@@ -36,6 +38,8 @@ fn main() {
             storage::save_data,
             storage::open_data_dir,
             idle::get_idle_seconds,
+            perch::perch_target,
+            perch::perch_window,
             lines::get_lines,
             lines::reset_lines,
             skins::list_skins,
