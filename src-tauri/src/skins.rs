@@ -14,6 +14,17 @@ use std::path::PathBuf;
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
+/// 內建預設造型直接編進程式裡：就算安裝目錄找不到 skins/ 資料夾，柑柑也一定能出現
+const EMBEDDED_MANIFEST: &str = include_str!("../../skins/default/manifest.json");
+const EMBEDDED_SPRITE: &[u8] = include_bytes!("../../skins/default/sprite.png");
+
+fn to_data_url(bytes: &[u8]) -> String {
+    format!(
+        "data:image/png;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    )
+}
+
 #[derive(Serialize, Clone)]
 pub struct SkinInfo {
     pub id: String,
@@ -76,6 +87,10 @@ pub fn list(app: &AppHandle) -> Vec<SkinInfo> {
             skins.push(info);
         }
     }
+    // 資料夾裡找不到預設造型時，補上內建的那一個
+    if !skins.iter().any(|s| s.id == "default") {
+        skins.push(SkinInfo { id: "default".into(), name: "柑柑（預設）".into(), author: "desk-pet".into() });
+    }
     // 預設造型排第一，其餘照名字排
     skins.sort_by(|a, b| (a.id != "default").cmp(&(b.id != "default")).then(a.name.cmp(&b.name)));
     skins
@@ -89,9 +104,11 @@ pub fn list_skins(app: AppHandle) -> Vec<SkinInfo> {
 /// 讀取造型：回傳 manifest 和圖片（轉成 data URL，前端可以直接當 <img> 來源）
 #[tauri::command]
 pub fn load_skin(app: AppHandle, id: String) -> Result<Value, String> {
-    let dir = find_skin_dir(&app, &id)
-        .or_else(|| find_skin_dir(&app, "default"))
-        .ok_or("找不到任何造型，請確認 skins/default 存在")?;
+    let Some(dir) = find_skin_dir(&app, &id).or_else(|| find_skin_dir(&app, "default")) else {
+        // 硬碟上完全找不到造型 → 使用編進程式裡的預設造型
+        let manifest: Value = serde_json::from_str(EMBEDDED_MANIFEST).map_err(|e| e.to_string())?;
+        return Ok(serde_json::json!({ "manifest": manifest, "image": to_data_url(EMBEDDED_SPRITE) }));
+    };
     let manifest = read_manifest(&dir).ok_or("manifest.json 格式錯誤")?;
 
     let image_name = manifest["image"].as_str().unwrap_or("sprite.png");
@@ -99,10 +116,5 @@ pub fn load_skin(app: AppHandle, id: String) -> Result<Value, String> {
         return Err("manifest.json 的 image 只能填同資料夾內的檔名".into());
     }
     let bytes = fs::read(dir.join(image_name)).map_err(|e| format!("讀不到精靈圖：{e}"))?;
-    let data_url = format!(
-        "data:image/png;base64,{}",
-        base64::engine::general_purpose::STANDARD.encode(bytes)
-    );
-
-    Ok(serde_json::json!({ "manifest": manifest, "image": data_url }))
+    Ok(serde_json::json!({ "manifest": manifest, "image": to_data_url(&bytes) }))
 }

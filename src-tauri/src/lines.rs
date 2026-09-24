@@ -7,16 +7,22 @@ use std::fs;
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
+/// 內建台詞也編進程式裡，安裝目錄找不到 lines.json 時使用
+const EMBEDDED_LINES: &str = include_str!("../../lines.json");
+
 #[tauri::command]
 pub fn get_lines(app: AppHandle) -> Result<Value, String> {
     let user_file = data_dir(&app)?.join("lines.json");
 
     if !user_file.exists() {
-        let bundled = app
+        let copied = app
             .path()
             .resolve("lines.json", BaseDirectory::Resource)
-            .map_err(|e| e.to_string())?;
-        fs::copy(&bundled, &user_file).map_err(|e| format!("找不到內建台詞：{e}"))?;
+            .ok()
+            .and_then(|bundled| fs::copy(bundled, &user_file).ok());
+        if copied.is_none() {
+            fs::write(&user_file, EMBEDDED_LINES).map_err(|e| e.to_string())?;
+        }
     }
 
     let text = fs::read_to_string(&user_file).map_err(|e| e.to_string())?;

@@ -205,7 +205,9 @@ async function applySkin(id: string): Promise<void> {
     const skin = await api.loadSkin(id);
     await animator.setSkin(skin.manifest, skin.image, settings.petScale);
   } catch (e) {
-    speech.show(`造型載入失敗喵：${e}`);
+    speech.show(`造型載入失敗喵：${e}`, 15000);
+    // 自訂造型壞掉的話，退回預設造型
+    if (id !== "default") await applySkin("default");
   }
 }
 
