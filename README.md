@@ -61,7 +61,7 @@
 
 | 功能 | 說明 |
 |---|---|
-| 基本行為 | 狀態機：閒置、走路、睡覺、被拖曳、點擊反應、思考中 |
+| 基本行為 | 狀態機：閒置、走路、睡覺、被拖曳、點擊反應、思考中、被摸頭、吃點心、坐在視窗上 |
 | 互動 | 摸頭、餵點心（每天 3 次）、好感度（越常互動越親密） |
 | 坐在視窗上 | 會跳到你正在用的視窗上緣坐著，視窗移動會跟著走，關掉就掉下來；拖曳放開時有重力 |
 | 電腦互動 | 用 Windows 閒置時間 API 判斷你在忙還是離開了。**只讀閒置秒數，不記錄任何按鍵內容** |
@@ -71,7 +71,7 @@
 | Claude 對話 | 點角色打開對話泡泡。角色知道你的待辦和番茄鐘狀態，可以幫你新增／完成待辦、設提醒、開番茄鐘。沒有填金鑰時，這個功能會自動隱藏 |
 | Claude app 聯動 | 對話可以「在 Claude 繼續」；沒有 API 金鑰也能開啟「在 Claude 開新對話」模式 |
 | 開機自動啟動 | 在設定的「一般」打開 |
-| 造型 | `skins/` 資料夾，一個造型 = `manifest.json` + 精靈圖，可以從托盤切換 |
+| 角色 | 內建柑柑、小奏、栞，可以從托盤切換；「角色工作室」可以用一張圖做出自己的角色 |
 | 托盤與設定 | 右下角托盤選單，加上一個設定視窗，管理以上所有功能 |
 
 ### 操作方式
@@ -199,94 +199,38 @@ npm run tauri build
 
 ---
 
-## 如何新增角色（造型）
+## 如何做自己的角色
 
-一個角色就是一個資料夾，裡面放：
+📘 **完整教學請看 [角色設計手冊](docs/CHARACTER_GUIDE.md)**（[日本語](docs/CHARACTER_GUIDE.ja.md)｜[English](docs/CHARACTER_GUIDE.en.md)）
 
-```
-my-skin/
-├─ manifest.json      必要：設定
-├─ sprite.png         必要：精靈圖
-└─ lines/             選用：角色專屬台詞
-   ├─ zh-TW.json
-   ├─ ja.json
-   └─ en.json
-```
+打開設定 →「角色」→「**角色工作室**」，三種方法任選：
 
-### 精靈圖 `sprite.png`
+1. **用圖片做**：最簡單。只要一張去背的 PNG，程式會自動加上彈跳、搖晃、小表情讓它動起來
+2. **畫像素精靈圖**：按一下就會建立範本，裡面有透明畫布、參考格線和設定檔。用 Aseprite、Piskel 等軟體畫好就能用
+3. **匯入別人分享的角色**：選擇對方的角色資料夾
 
-一張大圖，切成很多一樣大小的格子，**每一列是一個動畫**：
+角色會用到的動作有九種：
 
-```
-第 0 列：idle   閒置   □□□□
-第 1 列：walk   走路   □□□□
-第 2 列：sleep  睡覺   □□
-第 3 列：drag   被拖曳 □□
-第 4 列：react  開心   □□□□
-第 5 列：think  思考中 □□□□   （選用：等 Claude 回覆時）
-```
+- 閒置、走路、睡覺
+- 被拎起來、開心、思考中
+- 被摸頭、吃點心、坐在視窗上
 
-- 背景要**透明**（PNG）
-- 角色面向**左邊**。往右走時程式會自動左右翻轉
+最少只要「閒置」一種，其他沒畫的會自動用相近的動作代替。
 
-### `manifest.json`
-
-```json
-{
-  "name": "我的造型",
-  "author": "你的名字",
-  "image": "sprite.png",
-  "frameWidth": 32,
-  "frameHeight": 32,
-  "scale": 4,
-  "names": { "zh-TW": "我的角色", "ja": "わたしのキャラ", "en": "My Pet" },
-  "bio": { "zh-TW": "顯示在設定視窗「關於」的角色介紹" },
-  "persona": { "zh-TW": "你是……（聊天時的角色設定，寫給 Claude 看的）" },
-  "animations": {
-    "idle":  { "row": 0, "frames": 4, "fps": 3 },
-    "walk":  { "row": 1, "frames": 4, "fps": 8 },
-    "sleep": { "row": 2, "frames": 2, "fps": 1.5 },
-    "drag":  { "row": 3, "frames": 2, "fps": 6 },
-    "react": { "row": 4, "frames": 4, "fps": 8 }
-  }
-}
-```
-
-| 欄位 | 意思 |
-|---|---|
-| `frameWidth` / `frameHeight` | 每一格的寬高（像素） |
-| `scale` | 顯示時放大幾倍（像素畫建議 3～4） |
-| `row` | 這個動畫在第幾列（從 0 開始數） |
-| `frames` | 這個動畫有幾格 |
-| `fps` | 每秒播放幾格 |
-| `names` | 選用。各語言的名字 |
-| `bio` | 選用。各語言的角色介紹 |
-| `persona` | 選用。各語言的聊天個性（Claude 的 system prompt）。沒填就用通用的個性 |
-
-缺少的動畫會自動改用 `idle`。
-
-### 放在哪裡？
-
-把角色資料夾放進 `%APPDATA%\tw.deskpet.kankan\skins\`，在設定視窗的「角色」分頁按「重新掃描」，
-再從托盤或設定視窗切換就好，不用重新建置。
-
-> 私人角色**只放在這裡**。安裝檔只會包進公開的內建角色（`skins/default`、`skins/kanade`、`skins/shiori`），
-> 就算你把私人角色放在 repo 的 `skins/` 裡，它也不會被打包、不會被 commit（見下方「公開與私人怎麼分開」）。
-
-資料夾名稱就是造型 id，只能用英文、數字、`-` 和 `_`。
+做好的角色都存在 `%APPDATA%\tw.deskpet.kankan\skins\`，只有你的電腦上有。
+想分享給別人，就把角色資料夾壓成 zip 傳出去。
 
 ### 修改內建角色
 
-柑柑和小奏的像素圖都是用程式畫的：
+柑柑、小奏、栞的像素圖都是用程式畫的：
 
 - 柑柑：`scripts/gen-default-skin.mjs`，執行 `npm run gen:skin`
 - 小奏：`scripts/gen-kanade-skin.mjs`，執行 `node scripts/gen-kanade-skin.mjs`
 - 栞：`scripts/gen-shiori-skin.mjs`，執行 `node scripts/gen-shiori-skin.mjs`
 - 共用的繪圖工具：`scripts/pixel.mjs`
+- 像素範本：`scripts/gen-template.mjs` 會產生 `templates/skin-template/`
 
-也想更新程式圖示的話，再執行 `npx tauri icon app-icon.png -o src-tauri/icons`。
-
----
+想更新程式圖示，再執行 `npx tauri icon app-icon.png -o src-tauri/icons`。
 
 ## 如何填 Anthropic API 金鑰（Claude 對話）
 
@@ -343,7 +287,9 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 ├─ skins/default/          內建角色：柑柑
 ├─ skins/kanade/           內建角色：小奏（含專屬台詞）
 ├─ skins/shiori/           內建角色：栞（64×64 高清像素）
-├─ scripts/                用程式畫角色像素圖（pixel.mjs 是共用工具）
+├─ scripts/                用程式畫角色像素圖（pixel.mjs 是共用工具）、隱私檢查
+├─ templates/skin-template/ 像素角色範本（角色工作室「方法 2」會複製這份）
+├─ docs/                   角色設計手冊（三種語言）
 ├─ src/                    前端（TypeScript）
 │  ├─ main.ts              桌寵主程式：把下面各模組接起來
 │  ├─ pet/
