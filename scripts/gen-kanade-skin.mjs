@@ -24,6 +24,8 @@ const C = {
   glow: [255, 214, 107, 90],
   shadow: [0, 0, 0, 45],
   zz: [150, 160, 230],
+  heart: [255, 130, 170],
+  candy: [255, 200, 120],
 };
 
 /**
@@ -39,7 +41,7 @@ const C = {
  *  stretch 被拎起來時身體拉長
  */
 function drawKanade(p) {
-  const o = { bob: 0, sway: 0, eyes: "open", lamp: 1, lampDy: 0, mouth: "none", zz: -1, dotsN: 0, stretch: 0, ...p };
+  const o = { bob: 0, sway: 0, eyes: "open", lamp: 1, lampDy: 0, mouth: "none", zz: -1, dotsN: 0, stretch: 0, heart: -1, candy: 0, ...p };
   const f = newFrame(S);
   const cx = 15, cy = 16 + o.bob;
   const rx = 9 - o.stretch * 0.5, ry = 8.5 + o.stretch;
@@ -126,6 +128,12 @@ function drawKanade(p) {
   // 9. 裝飾
   if (o.zz >= 0) dots(f, [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [3, 1], [2, 2], [1, 3], [0, 4], [1, 4], [2, 4], [3, 4], [4, 4]], C.zz, 1, 1 + o.zz);
   for (let i = 0; i < o.dotsN; i++) dots(f, [[0, 0], [1, 0], [0, 1], [1, 1]], C.gold, 2 + i * 3, top);
+  if (o.heart >= 0) dots(f, [[1, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]], C.heart, 2, 3 + o.heart);
+  // 吃點心：嘴邊一顆星星糖（candy = 1 完整、2 咬了一口）
+  if (o.candy > 0) {
+    const star = [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]];
+    dots(f, o.candy === 2 ? star.slice(1) : star, C.candy, 16, ey + 4);
+  }
   return f;
 }
 
@@ -147,6 +155,15 @@ const anims = {
     { bob: -2, eyes: "happy", mouth: "smile", lamp: 2 }, { bob: -3, eyes: "happy", mouth: "smile", lamp: 2, lampDy: -1 },
     { bob: -2, eyes: "happy", mouth: "smile", lamp: 1 }, { bob: -1, eyes: "happy", mouth: "smile", lamp: 2 },
   ],
+  pet: [
+    { eyes: "happy", mouth: "smile", lamp: 2, heart: 1, bob: 1 }, { eyes: "happy", mouth: "smile", lamp: 2, heart: 0, sway: 1 },
+  ],
+  eat: [
+    { eyes: "happy", mouth: "o", candy: 1 }, { eyes: "happy", mouth: "smile", candy: 2, bob: -1 },
+  ],
+  sit: [
+    { bob: 2, sway: 0, lampDy: 0 }, { bob: 2, sway: 1, lampDy: -1, eyes: "blink" },
+  ],
   think: [
     { eyes: "think", lamp: 1, dotsN: 1 }, { eyes: "think", lamp: 2, dotsN: 2, bob: -1 },
     { eyes: "think", lamp: 1, dotsN: 3, bob: -1 }, { eyes: "blink", lamp: 2, dotsN: 3 },
@@ -155,7 +172,7 @@ const anims = {
 
 const frames = Object.fromEntries(Object.entries(anims).map(([k, list]) => [k, list.map(drawKanade)]));
 const animations = writeSheet("skins/kanade/sprite.png", frames, { w: S, h: S },
-  { idle: 3, walk: 6, sleep: 1.5, drag: 6, react: 8, think: 4 });
+  { idle: 3, walk: 6, sleep: 1.5, drag: 6, react: 8, pet: 4, eat: 5, sit: 1.5, think: 4 });
 
 // 只更新 manifest 的 animations，其他欄位（名字、台詞、個性）保留
 const mPath = "skins/kanade/manifest.json";

@@ -25,6 +25,9 @@ const C = {
   leaf: [124, 196, 106],    // 葉子
   leafDark: [78, 154, 72],
   spark: [255, 224, 102],   // 開心的星星
+  heart: [255, 110, 140],   // 愛心
+  cookie: [214, 150, 80],   // 點心
+  cookieDot: [120, 70, 40],
   zz: [150, 130, 200],      // 睡覺的 z
 };
 
@@ -49,7 +52,7 @@ function put(f, x, y, color) {
  *  spark 是否畫星星
  */
 function drawKankan(p) {
-  const o = { bob: 0, sx: 1, sy: 1, eyes: "open", mouth: "w", feet: [0, 0], tail: 0, zz: -1, spark: false, ...p };
+  const o = { bob: 0, sx: 1, sy: 1, eyes: "open", mouth: "w", feet: [0, 0], tail: 0, zz: -1, spark: false, heart: -1, cookie: 0, ...p };
   const f = newFrame();
   const cx = 16, cy = 20 + o.bob;
   const rx = 11 * o.sx, ry = 8.5 * o.sy;
@@ -162,7 +165,21 @@ function drawKankan(p) {
       [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => put(f, sx + dx, sy + dy, C.spark));
     }
   }
+  // 被摸頭：頭上冒愛心（heart = 高度位移）
+  if (o.heart >= 0) {
+    dots(f, [[1, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]], C.heart, 23, 1 + o.heart);
+  }
+  // 吃點心：嘴邊的餅乾（cookie = 1 完整、2 咬掉一口）
+  if (o.cookie > 0) {
+    const ck = [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2], [1, 3], [2, 3]];
+    dots(f, o.cookie === 2 ? ck.filter(([x, y]) => x < 2 || y > 1) : ck, C.cookie, 17, cy + 1);
+    put(f, 18, cy + 2, C.cookieDot);
+  }
   return f;
+}
+
+function dots(f, list, color, ox = 0, oy = 0) {
+  for (const [x, y] of list) put(f, x + ox, y + oy, color);
 }
 
 // ---------- 動畫表：每一列是一個動畫 ----------
@@ -184,6 +201,15 @@ const ANIMS = {
   react: [
     { bob: -2, eyes: "happy", spark: true }, { bob: -3, eyes: "happy", tail: 1 },
     { bob: -1, eyes: "happy", spark: true }, { bob: 0, eyes: "happy", tail: 1 },
+  ],
+  pet: [
+    { bob: 1, sy: 0.94, eyes: "happy", heart: 1, tail: 1 }, { bob: 0, eyes: "happy", heart: 0, tail: 0 },
+  ],
+  eat: [
+    { eyes: "happy", mouth: "o", cookie: 1 }, { eyes: "happy", mouth: "w", cookie: 2, bob: 1 },
+  ],
+  sit: [
+    { bob: 1, feet: [1, 0], tail: 0 }, { bob: 1, feet: [0, 1], tail: 1 },
   ],
 };
 

@@ -47,9 +47,16 @@ const pomoBadge = $("pomo");
 const menu = $("menu");
 
 const sm = new PetStateMachine((state: PetState) => {
-  animator.play(state);
+  // 坐在視窗上的時候，閒置改成「坐著晃腳」
+  animator.play(state === "idle" && mover.perch ? "sit" : state);
   if (state === "walk") mover.randomizeDirection();
 });
+
+/** 播一個特別的動作（摸頭、吃東西…），時間到自動回到閒置 */
+function emote(anim: string, seconds: number): void {
+  sm.set("react", seconds);
+  animator.play(anim);
+}
 
 const activity = new ActivityMonitor((next, prev) => {
   if (next === "away") {
@@ -185,7 +192,7 @@ async function feed(): Promise<void> {
     say("feed_full");
     return;
   }
-  sm.react();
+  emote("eat", 1.8);
   say(r === "levelUp" ? "love_up" : "feed");
   showSnack();
 }
@@ -202,7 +209,7 @@ function showSnack(): void {
 async function onPetted(): Promise<void> {
   if (sm.state === "drag") return;
   sm.wake();
-  sm.react();
+  emote("pet", 1.8);
   say("pet");
   if (await stats.addAffection(1)) setTimeout(() => say("love_up"), 2500);
 }
@@ -356,7 +363,7 @@ function setupPerching(): void {
 async function applySkin(id: string): Promise<void> {
   try {
     const skin = await api.loadSkin(id);
-    await animator.setSkin(skin.manifest, skin.image, settings.petScale);
+    await animator.setSkin(skin.manifest, skin.images, settings.petScale);
   } catch (e) {
     speech.show(t("err.skin") + e, 15000);
     // 自訂造型壞掉的話，退回預設造型

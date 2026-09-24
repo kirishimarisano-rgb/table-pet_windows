@@ -39,6 +39,9 @@ const C = {
   zz: [150, 160, 230],
   spark: [255, 196, 120],
   sweat: [140, 190, 240],
+  heart: [255, 120, 150],
+  cookie: [214, 156, 92],
+  cookieDot: [120, 72, 44],
 };
 
 const inE = (x, y, cx, cy, rx, ry) => ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1;
@@ -66,7 +69,7 @@ function flower(f, cx, cy, r, petals = 10) {
  *  arms  手的高度      zz / spark / dotsN 裝飾
  */
 function draw(p) {
-  const o = { bob: 0, sway: 0, eyes: "open", mouth: "none", legs: [0, 0], dangle: false, arms: 0, zz: -1, spark: false, dotsN: 0, ...p };
+  const o = { bob: 0, sway: 0, eyes: "open", mouth: "none", legs: [0, 0], dangle: false, arms: 0, zz: -1, spark: false, dotsN: 0, heart: -1, cookie: 0, ...p };
   const f = newFrame(S);
   const b = o.bob;
   const hy = 27 + b; // 頭的中心
@@ -249,6 +252,23 @@ function draw(p) {
   }
   if (o.spark) for (const [sx, sy] of [[6, 18], [58, 30], [10, 36]])
     dots(f, [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]], C.spark, sx, sy);
+  // 被摸頭：頭旁邊冒出兩顆愛心
+  if (o.heart >= 0) {
+    const h = [[1, 0], [2, 0], [4, 0], [5, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4], [3, 5]];
+    dots(f, h, C.heart, 4, 12 + o.heart);
+    dots(f, [[1, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]], C.heart, 55, 18 - o.heart);
+  }
+  // 吃點心：雙手拿著一塊餅乾（cookie = 1 完整、2 咬了一口）
+  if (o.cookie > 0) {
+    const cx = 29, cy = hy + 16;
+    for (let y = 0; y < 5; y++) for (let x = 0; x < 6; x++) {
+      if ((x === 0 || x === 5) && (y === 0 || y === 4)) continue;
+      if (o.cookie === 2 && x >= 4 && y <= 1) continue;
+      put(f, cx + x, cy + y, C.cookie);
+    }
+    dots(f, [[1, 1], [3, 3], [4, 2]], C.cookieDot, cx, cy);
+    dots(f, [[-1, 3], [6, 3]], C.skin, cx, cy);
+  }
   // 思考泡泡（跟原圖一樣，往左上飄）
   const bubbles = [[12, 18, 1.4], [8, 12, 2.2], [4.5, 5.5, 3.2]];
   for (let i = 0; i < o.dotsN; i++) {
@@ -267,12 +287,15 @@ const anims = {
   drag: [{ eyes: "wide", mouth: "o", dangle: true, legs: [1, 0], arms: -2 }, { eyes: "wide", mouth: "o", dangle: true, legs: [0, 1], sway: 1, arms: -3 }],
   react: [{ bob: -3, eyes: "happy", mouth: "smile", spark: true, arms: -2 }, { bob: -5, eyes: "happy", mouth: "smile", arms: -3 },
     { bob: -2, eyes: "happy", mouth: "smile", spark: true, arms: -1 }, { eyes: "open", mouth: "smile" }],
+  pet: [{ eyes: "happy", mouth: "smile", heart: 1, bob: 1 }, { eyes: "happy", mouth: "smile", heart: 0, sway: 1 }],
+  eat: [{ eyes: "happy", mouth: "o", cookie: 1, arms: -2 }, { eyes: "happy", mouth: "smile", cookie: 2, arms: -2, bob: 1 }],
+  sit: [{ bob: 1, dangle: true, legs: [1, 0] }, { bob: 1, dangle: true, legs: [0, 1], sway: 1, eyes: "blink" }],
   think: [{ eyes: "look", dotsN: 1 }, { eyes: "look", dotsN: 2 }, { eyes: "look", dotsN: 3 }, { eyes: "blink", dotsN: 3 }],
 };
 
 const frames = Object.fromEntries(Object.entries(anims).map(([k, list]) => [k, list.map(draw)]));
 const animations = writeSheet("skins/shiori/sprite.png", frames, { w: S, h: S },
-  { idle: 2.5, walk: 7, sleep: 1.5, drag: 6, react: 8, think: 3 });
+  { idle: 2.5, walk: 7, sleep: 1.5, drag: 6, react: 8, pet: 4, eat: 5, sit: 1.5, think: 3 });
 
 const mPath = "skins/shiori/manifest.json";
 let manifest = {};

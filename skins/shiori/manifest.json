@@ -46,8 +46,23 @@
       "frames": 4,
       "fps": 8
     },
-    "think": {
+    "pet": {
       "row": 5,
+      "frames": 2,
+      "fps": 4
+    },
+    "eat": {
+      "row": 6,
+      "frames": 2,
+      "fps": 5
+    },
+    "sit": {
+      "row": 7,
+      "frames": 2,
+      "fps": 1.5
+    },
+    "think": {
+      "row": 8,
       "frames": 4,
       "fps": 3
     }

@@ -45,6 +45,21 @@
       "row": 4,
       "frames": 4,
       "fps": 8
+    },
+    "pet": {
+      "row": 5,
+      "frames": 2,
+      "fps": 4
+    },
+    "eat": {
+      "row": 6,
+      "frames": 2,
+      "fps": 5
+    },
+    "sit": {
+      "row": 7,
+      "frames": 2,
+      "fps": 2
     }
   }
 }
