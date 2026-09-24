@@ -12,10 +12,20 @@ export interface SkinInfo {
   author: string;
   /** 各語言的名字，例如 { "ja": "カナデ" } */
   names: Record<string, string> | null;
+  /** 使用者自己加的角色（可以刪除） */
+  user: boolean;
 }
 
 export interface SkinManifest {
   name: string;
+  /** "image" = 圖片模式（每個動作一張圖）；不填 = 精靈圖模式 */
+  mode?: "image";
+  /** 圖片模式：角色在畫面上的高度（CSS 像素，預設 128） */
+  height?: number;
+  /** 放大時要不要保持像素顆粒感（精靈圖預設 true，圖片模式預設 false） */
+  pixelated?: boolean;
+  /** 圖片模式：各動作的圖片檔名 */
+  images?: Record<string, string>;
   author?: string;
   image?: string;
   frameWidth: number;
@@ -54,7 +64,14 @@ export const api = {
 
   // 造型（skins.rs）
   listSkins: () => invoke<SkinInfo[]>("list_skins"),
-  loadSkin: (id: string) => invoke<{ manifest: SkinManifest; image: string }>("load_skin", { id }),
+  /** images：精靈圖模式是 { sheet }，圖片模式是 { idle, walk, … } */
+  loadSkin: (id: string) => invoke<{ manifest: SkinManifest; images: Record<string, string> }>("load_skin", { id }),
+  /** 角色工作室 */
+  createSkin: (name: string, images: Record<string, string>, persona: string, bio: string) =>
+    invoke<string>("create_skin", { name, images, persona, bio }),
+  importSkinFolder: (path: string) => invoke<string>("import_skin_folder", { path }),
+  createSkinTemplate: () => invoke<string>("create_skin_template"),
+  deleteSkin: (id: string) => invoke<void>("delete_skin", { id }),
   selectSkin: (id: string) => invoke<void>("select_skin", { id }),
 
   // Claude（claude.rs）：前端永遠拿不到金鑰本身
@@ -65,6 +82,8 @@ export const api = {
     invoke<ChatReply>("claude_chat", { messages, context, now }),
   /** 在 Claude（claude.ai）開新對話並填好問題 */
   openInClaude: (prompt: string) => invoke<void>("open_in_claude", { prompt }),
+  /** 開啟網址（只允許本專案 GitHub 和 claude.ai） */
+  openUrl: (url: string) => invoke<void>("open_url", { url }),
 
   // 視窗與托盤（tray.rs）
   openSettings: () => invoke<void>("open_settings_window"),

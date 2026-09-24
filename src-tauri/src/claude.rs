@@ -361,3 +361,14 @@ pub fn open_in_claude(app: AppHandle, prompt: String) -> Result<(), String> {
     };
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
+
+/// 開啟網址（只允許本專案的 GitHub 頁面和 claude.ai，避免被拿來亂開網址）
+#[tauri::command]
+pub fn open_url(app: AppHandle, url: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    const ALLOWED: &[&str] = &["https://github.com/kirishimarisano-rgb/table-pet_windows", "https://claude.ai/"];
+    if !ALLOWED.iter().any(|p| url.starts_with(p)) {
+        return Err("不允許開啟這個網址".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}

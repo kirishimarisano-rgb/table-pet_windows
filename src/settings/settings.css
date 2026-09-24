@@ -114,6 +114,24 @@ button.link:hover { color: #c0392b; background: none; }
 }
 .card.selected { border-color: var(--orange-dark); }
 .card small { color: var(--muted); }
+.card .card-del { align-self: flex-end; margin-top: 4px; font-size: 12px; }
+
+/* ---- 角色工作室 ---- */
+details { margin: 10px 0; padding: 8px 12px; background: var(--card); border-radius: 10px; }
+summary { cursor: pointer; font-weight: bold; }
+textarea {
+  display: block; width: 100%; margin-top: 4px; padding: 6px 8px;
+  border: 2px solid #f3d3a8; border-radius: 8px; font: inherit; color: var(--brown); resize: vertical;
+}
+.image-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin: 8px 0; }
+.slot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  height: 104px; padding: 4px; background: white; border: 2px dashed #f3d3a8; border-radius: 8px;
+  color: var(--muted); font-size: 12px; font-weight: normal; cursor: pointer;
+}
+.slot.required { border-color: var(--orange); }
+.slot img { max-width: 100%; max-height: 64px; object-fit: contain; }
+.slot:hover { background: #fff6ea; color: var(--brown); }
 
 /* ---- 台詞表 ---- */
 table { width: 100%; border-collapse: collapse; margin-top: 12px; }

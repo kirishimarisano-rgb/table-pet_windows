@@ -101,11 +101,41 @@
       <!-- ===== 角色 ===== -->
       <section id="tab-skins">
         <div id="skin-list" class="cards"></div>
-        <p class="muted" data-i18n="skins.note"></p>
         <div class="row">
           <button id="skins-open" class="secondary" data-i18n="skins.open"></button>
-          <button id="skins-reload" data-i18n="skins.reload"></button>
+          <button id="skins-reload" class="secondary" data-i18n="skins.reload"></button>
+          <button id="skins-guide" class="secondary" data-i18n="studio.guide"></button>
         </div>
+
+        <!-- 角色工作室：三種做角色的方法 -->
+        <h3 data-i18n="studio.title"></h3>
+        <p class="muted" data-i18n="studio.intro"></p>
+
+        <details open>
+          <summary data-i18n="studio.fromImages"></summary>
+          <p class="muted" data-i18n="studio.fromImagesNote"></p>
+          <label><span data-i18n="studio.name"></span><input id="studio-name" type="text" maxlength="40" /></label>
+          <div id="studio-images" class="image-slots"></div>
+          <label><span data-i18n="studio.persona"></span>
+            <textarea id="studio-persona" rows="3" data-i18n-placeholder="studio.personaPlaceholder"></textarea>
+          </label>
+          <label><span data-i18n="studio.bio"></span>
+            <textarea id="studio-bio" rows="2"></textarea>
+          </label>
+          <button id="studio-create" data-i18n="studio.create"></button>
+        </details>
+
+        <details>
+          <summary data-i18n="studio.fromPixel"></summary>
+          <p class="muted" data-i18n="studio.fromPixelNote"></p>
+          <button id="studio-template" class="secondary" data-i18n="studio.template"></button>
+        </details>
+
+        <details>
+          <summary data-i18n="studio.fromFolder"></summary>
+          <p class="muted" data-i18n="studio.fromFolderNote"></p>
+          <button id="studio-import" class="secondary" data-i18n="studio.import"></button>
+        </details>
       </section>
 
       <!-- ===== Claude ===== -->

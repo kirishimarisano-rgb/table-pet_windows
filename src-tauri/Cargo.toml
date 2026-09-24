@@ -16,6 +16,7 @@ base64 = "0.22"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
 
 # 只有 Windows 需要：讀取「使用者多久沒碰鍵盤滑鼠」
 [target.'cfg(windows)'.dependencies]
