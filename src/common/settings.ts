@@ -3,8 +3,11 @@
 // 存在使用者資料夾的 settings.json；缺少的欄位會自動補上預設值。
 // =============================================================
 import { api } from "./api";
+import { detectLang, type Lang } from "./i18n";
 
 export interface Settings {
+  /** 介面、台詞、聊天使用的語言 */
+  language: Lang;
   skin: string;
   /** 大小倍率（1 = 原始大小） */
   petScale: number;
@@ -29,17 +32,20 @@ export interface Settings {
     enabled: boolean;
     model: string;
     effort: "low" | "medium" | "high";
+    /** 沒有 API 金鑰時，點角色改為「在 Claude 開新對話」 */
+    handoff: boolean;
   };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: detectLang(),
   skin: "default",
   petScale: 1,
   walkEnabled: true,
   talkIntervalMin: 5,
   activity: { busySec: 30, awaySec: 300 },
   pomodoro: { workMin: 25, breakMin: 5, autoBreak: true },
-  claude: { enabled: true, model: "claude-sonnet-5", effort: "medium" },
+  claude: { enabled: true, model: "claude-sonnet-5", effort: "medium", handoff: false },
 };
 
 /** 把讀到的設定和預設值合併（只合併一層巢狀，夠用了） */

@@ -30,6 +30,14 @@ pub struct SkinInfo {
     pub id: String,
     pub name: String,
     pub author: String,
+    /// 各語言的名字（manifest.json 的 names），沒有就用 name
+    pub names: Value,
+}
+
+impl SkinInfo {
+    pub fn display_name(&self, lang: &str) -> &str {
+        self.names[lang].as_str().unwrap_or(&self.name)
+    }
 }
 
 /// 造型所在的根資料夾（內建在前、使用者在後）
@@ -50,7 +58,7 @@ fn valid_id(id: &str) -> bool {
 }
 
 /// 找到某個造型的資料夾
-fn find_skin_dir(app: &AppHandle, id: &str) -> Option<PathBuf> {
+pub fn find_skin_dir(app: &AppHandle, id: &str) -> Option<PathBuf> {
     if !valid_id(id) {
         return None;
     }
@@ -61,7 +69,7 @@ fn find_skin_dir(app: &AppHandle, id: &str) -> Option<PathBuf> {
         .find(|dir| dir.join("manifest.json").exists())
 }
 
-fn read_manifest(dir: &PathBuf) -> Option<Value> {
+pub fn read_manifest(dir: &PathBuf) -> Option<Value> {
     let text = fs::read_to_string(dir.join("manifest.json")).ok()?;
     serde_json::from_str(&text).ok()
 }
@@ -80,6 +88,7 @@ pub fn list(app: &AppHandle) -> Vec<SkinInfo> {
             let info = SkinInfo {
                 name: m["name"].as_str().unwrap_or(&id).to_string(),
                 author: m["author"].as_str().unwrap_or("").to_string(),
+                names: m["names"].clone(),
                 id: id.clone(),
             };
             // 同 id 後面的（使用者資料夾）覆蓋前面的
@@ -89,7 +98,13 @@ pub fn list(app: &AppHandle) -> Vec<SkinInfo> {
     }
     // 資料夾裡找不到預設造型時，補上內建的那一個
     if !skins.iter().any(|s| s.id == "default") {
-        skins.push(SkinInfo { id: "default".into(), name: "柑柑（預設）".into(), author: "desk-pet".into() });
+        let m: Value = serde_json::from_str(EMBEDDED_MANIFEST).unwrap_or_default();
+        skins.push(SkinInfo {
+            id: "default".into(),
+            name: "柑柑（預設）".into(),
+            author: "desk-pet".into(),
+            names: m["names"].clone(),
+        });
     }
     // 預設造型排第一，其餘照名字排
     skins.sort_by(|a, b| (a.id != "default").cmp(&(b.id != "default")).then(a.name.cmp(&b.name)));
@@ -117,4 +132,13 @@ pub fn load_skin(app: AppHandle, id: String) -> Result<Value, String> {
     }
     let bytes = fs::read(dir.join(image_name)).map_err(|e| format!("讀不到精靈圖：{e}"))?;
     Ok(serde_json::json!({ "manifest": manifest, "image": to_data_url(&bytes) }))
+}
+
+/// 目前造型的角色個性（manifest.json 的 persona.<語言>），沒有就回傳 None
+pub fn persona(app: &AppHandle, id: &str, lang: &str) -> Option<String> {
+    let manifest = match find_skin_dir(app, id).or_else(|| find_skin_dir(app, "default")) {
+        Some(dir) => read_manifest(&dir)?,
+        None => serde_json::from_str(EMBEDDED_MANIFEST).ok()?,
+    };
+    manifest["persona"][lang].as_str().map(str::to_string)
 }

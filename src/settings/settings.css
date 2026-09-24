@@ -120,3 +120,5 @@ table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f3d3a8; }
 
 .about p { line-height: 1.8; }
+#about-bio { white-space: pre-line; }
+#about-img { image-rendering: pixelated; }

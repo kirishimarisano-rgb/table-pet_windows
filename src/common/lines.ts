@@ -5,12 +5,15 @@ import { api } from "./api";
 
 export class Lines {
   private data: Record<string, string[]> = {};
+  /** 最後一次讀取失敗的原因（沒有錯誤是 null） */
+  error: string | null = null;
   /** 記住每個分類上一次說的話，避免連續講同一句 */
   private last: Record<string, string> = {};
 
-  async load(): Promise<void> {
+  /** 讀取某個語言、某個角色的台詞（角色專屬台詞會蓋掉共用台詞） */
+  async load(lang: string, skin: string): Promise<void> {
     try {
-      const raw = await api.getLines();
+      const raw = await api.getLines(lang, skin);
       this.data = {};
       for (const [key, value] of Object.entries(raw)) {
         // 底線開頭的是說明欄位；只收字串陣列
@@ -19,8 +22,11 @@ export class Lines {
       }
     } catch (e) {
       console.error("讀取台詞失敗", e);
-      this.data = { idle: ["喵？（台詞檔好像壞掉了）"] };
+      this.error = String(e);
+      this.data = { idle: ["……？"] };
+      return;
     }
+    this.error = null;
   }
 
   /** 從某個分類隨機挑一句；分類不存在就回傳 null */

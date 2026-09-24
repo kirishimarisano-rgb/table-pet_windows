@@ -11,20 +11,44 @@ use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder, Wry};
 
 const TRAY_ID: &str = "main-tray";
 
+/// 托盤選單的文字（三種語言）
+fn t(lang: &str, key: &str) -> &'static str {
+    let (zh, ja, en) = match key {
+        "toggle" => ("顯示／隱藏", "表示／非表示", "Show / Hide"),
+        "say" => ("打招呼", "あいさつ", "Say hello"),
+        "feed" => ("餵點心", "おやつをあげる", "Give a snack"),
+        "skins" => ("造型", "キャラクター", "Characters"),
+        "reload" => ("重新掃描造型", "再読み込み", "Rescan"),
+        "pomo" => ("番茄鐘", "ポモドーロ", "Pomodoro"),
+        "work" => ("開始專注", "集中を開始", "Start focus"),
+        "break" => ("開始休息", "休憩を開始", "Start break"),
+        "stop" => ("停止", "停止", "Stop"),
+        "claude" => ("在 Claude 開新對話", "Claude で新しいチャット", "New chat in Claude"),
+        "settings" => ("待辦與設定…", "ToDo と設定…", "To-dos & Settings…"),
+        "quit" => ("結束", "終了", "Quit"),
+        _ => ("?", "?", "?"),
+    };
+    match lang {
+        "ja" => ja,
+        "en" => en,
+        _ => zh,
+    }
+}
+
 /// 建立選單（造型清單會變，所以每次需要時重建）
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
-    let current_skin = read_json(app, "settings")["skin"]
-        .as_str()
-        .unwrap_or("default")
-        .to_string();
+    let settings = read_json(app, "settings");
+    let current_skin = settings["skin"].as_str().unwrap_or("default").to_string();
+    let lang = settings["language"].as_str().unwrap_or("zh-TW").to_string();
+    let l = |k| t(&lang, k);
 
     // 造型子選單
-    let skin_menu = Submenu::with_id(app, "skins", "造型", true)?;
+    let skin_menu = Submenu::with_id(app, "skins", l("skins"), true)?;
     for s in skins::list(app) {
         let item = CheckMenuItem::with_id(
             app,
             format!("skin:{}", s.id),
-            &s.name,
+            s.display_name(&lang),
             true,
             s.id == current_skin,
             None::<&str>,
@@ -32,25 +56,27 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
         skin_menu.append(&item)?;
     }
     skin_menu.append(&PredefinedMenuItem::separator(app)?)?;
-    skin_menu.append(&MenuItem::with_id(app, "skins-reload", "重新掃描造型", true, None::<&str>)?)?;
+    skin_menu.append(&MenuItem::with_id(app, "skins-reload", l("reload"), true, None::<&str>)?)?;
 
     // 番茄鐘子選單
-    let pomo_menu = Submenu::with_id(app, "pomo", "番茄鐘", true)?;
-    pomo_menu.append(&MenuItem::with_id(app, "pomo:work", "開始專注", true, None::<&str>)?)?;
-    pomo_menu.append(&MenuItem::with_id(app, "pomo:break", "開始休息", true, None::<&str>)?)?;
-    pomo_menu.append(&MenuItem::with_id(app, "pomo:stop", "停止", true, None::<&str>)?)?;
+    let pomo_menu = Submenu::with_id(app, "pomo", l("pomo"), true)?;
+    pomo_menu.append(&MenuItem::with_id(app, "pomo:work", l("work"), true, None::<&str>)?)?;
+    pomo_menu.append(&MenuItem::with_id(app, "pomo:break", l("break"), true, None::<&str>)?)?;
+    pomo_menu.append(&MenuItem::with_id(app, "pomo:stop", l("stop"), true, None::<&str>)?)?;
 
     Menu::with_items(
         app,
         &[
-            &MenuItem::with_id(app, "toggle", "顯示／隱藏柑柑", true, None::<&str>)?,
-            &MenuItem::with_id(app, "say", "跟柑柑打招呼", true, None::<&str>)?,
+            &MenuItem::with_id(app, "toggle", l("toggle"), true, None::<&str>)?,
+            &MenuItem::with_id(app, "say", l("say"), true, None::<&str>)?,
+            &MenuItem::with_id(app, "feed", l("feed"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &skin_menu,
             &pomo_menu,
-            &MenuItem::with_id(app, "settings", "待辦與設定…", true, None::<&str>)?,
+            &MenuItem::with_id(app, "claude", l("claude"), true, None::<&str>)?,
+            &MenuItem::with_id(app, "settings", l("settings"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "quit", "結束", true, None::<&str>)?,
+            &MenuItem::with_id(app, "quit", l("quit"), true, None::<&str>)?,
         ],
     )
 }
@@ -70,7 +96,7 @@ pub fn open_settings(app: &AppHandle) {
         return;
     }
     let _ = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
-        .title("柑柑的設定")
+        .title("desk-pet")
         .inner_size(560.0, 640.0)
         .min_inner_size(460.0, 480.0)
         .build();
@@ -91,7 +117,7 @@ pub fn set_skin(app: &AppHandle, id: &str) {
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let menu = build_menu(app)?;
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
-        .tooltip("柑柑")
+        .tooltip("desk-pet")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
@@ -108,6 +134,12 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                 }
                 "say" => {
                     let _ = app.emit("pet-say", "greeting");
+                }
+                "feed" => {
+                    let _ = app.emit("pet-feed", ());
+                }
+                "claude" => {
+                    let _ = crate::claude::open_in_claude(app.clone(), String::new());
                 }
                 "settings" => open_settings(app),
                 "skins-reload" => refresh_menu(app),

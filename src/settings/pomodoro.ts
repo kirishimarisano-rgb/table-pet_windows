@@ -3,18 +3,20 @@
 // =============================================================
 import { emit, listen } from "@tauri-apps/api/event";
 import { EV } from "../common/events";
+import { t } from "../common/i18n";
 import { formatTime, type PomoStatus } from "../pet/pomodoro";
 
-const PHASE_TEXT = { off: "未開始", work: "專注中 🍊", break: "休息中 ☕" };
+const PHASE_TEXT = { off: "pomo.off", work: "pomo.work", break: "pomo.break" };
 
 export async function setupPomodoro(): Promise<void> {
   const display = document.getElementById("pomo-display")!;
   const phase = document.getElementById("pomo-phase")!;
+  phase.textContent = t("pomo.off");
 
   await listen<PomoStatus>(EV.pomodoroStatus, (e) => {
     const s = e.payload;
     display.textContent = s.phase === "off" ? "--:--" : formatTime(s.remainingSec);
-    phase.textContent = PHASE_TEXT[s.phase];
+    phase.textContent = t(PHASE_TEXT[s.phase]);
   });
 
   document.querySelectorAll<HTMLButtonElement>("[data-pomo]").forEach((btn) =>

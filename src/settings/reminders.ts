@@ -3,6 +3,7 @@
 // =============================================================
 import { listen } from "@tauri-apps/api/event";
 import { api } from "../common/api";
+import { t } from "../common/i18n";
 import { EV } from "../common/events";
 import { newId, todayStr, type Reminder } from "../common/types";
 
@@ -15,15 +16,15 @@ async function save(): Promise<void> {
 }
 
 function describe(r: Reminder): string {
-  if (r.kind === "daily") return `每天 ${r.at}`;
-  return r.at.replace("T", " ") + (r.done ? "（已提醒）" : "");
+  if (r.kind === "daily") return t("rem.everyday", { at: r.at });
+  return r.at.replace("T", " ") + (r.done ? t("rem.fired") : "");
 }
 
 function render(): void {
   const ul = $("rem-list");
   ul.innerHTML = "";
   if (reminders.length === 0) {
-    ul.innerHTML = '<li class="muted">還沒有提醒</li>';
+    ul.innerHTML = `<li class="muted">${t("rem.empty")}</li>`;
     return;
   }
   for (const r of reminders) {
@@ -32,7 +33,7 @@ function render(): void {
     const span = document.createElement("span");
     span.textContent = `${r.text}　—　${describe(r)}`;
     const del = document.createElement("button");
-    del.textContent = "刪除";
+    del.textContent = t("todo.delete");
     del.className = "link";
     del.addEventListener("click", async () => {
       reminders = reminders.filter((x) => x.id !== r.id);
@@ -60,11 +61,11 @@ export async function setupReminders(): Promise<void> {
 
     if (kind.value === "once") {
       const at = $<HTMLInputElement>("rem-datetime").value;
-      if (!at) return alert("請選擇時間");
+      if (!at) return alert(t("rem.pickTime"));
       reminders.push({ id: newId(), text, kind: "once", at });
     } else {
       const at = $<HTMLInputElement>("rem-time").value;
-      if (!at) return alert("請選擇時間");
+      if (!at) return alert(t("rem.pickTime"));
       // 如果今天的時間已經過了，就從明天開始提醒
       const now = new Date().toTimeString().slice(0, 5);
       reminders.push({ id: newId(), text, kind: "daily", at, lastFiredDate: at <= now ? todayStr() : undefined });

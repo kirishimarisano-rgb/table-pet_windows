@@ -1,9 +1,10 @@
 // =============================================================
 // 待辦清單（存在 todos.json）
-// 勾選完成時會通知柑柑，讓它說「完成待辦」的台詞。
+// 勾選完成時會通知桌寵角色，讓它說「完成待辦」的台詞。
 // =============================================================
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { api } from "../common/api";
+import { t } from "../common/i18n";
 import { EV } from "../common/events";
 import { newId, type Todo } from "../common/types";
 
@@ -12,6 +13,7 @@ const listEl = () => document.getElementById("todo-list")!;
 
 async function save(): Promise<void> {
   await api.saveData("todos", todos);
+  await emit(EV.todosChanged);
   render();
 }
 
@@ -20,37 +22,37 @@ function render(): void {
   ul.innerHTML = "";
   // 未完成的排前面
   const sorted = [...todos].sort((a, b) => Number(a.done) - Number(b.done));
-  for (const t of sorted) {
+  for (const item of sorted) {
     const li = document.createElement("li");
-    li.className = t.done ? "done" : "";
+    li.className = item.done ? "done" : "";
 
     const box = document.createElement("input");
     box.type = "checkbox";
-    box.checked = t.done;
-    box.addEventListener("change", () => toggle(t, box.checked));
+    box.checked = item.done;
+    box.addEventListener("change", () => toggle(item, box.checked));
 
     const span = document.createElement("span");
-    span.textContent = t.text;
+    span.textContent = item.text;
 
     const del = document.createElement("button");
-    del.textContent = "刪除";
+    del.textContent = t("todo.delete");
     del.className = "link";
     del.addEventListener("click", async () => {
-      todos = todos.filter((x) => x.id !== t.id);
+      todos = todos.filter((x) => x.id !== item.id);
       await save();
     });
 
     li.append(box, span, del);
     ul.appendChild(li);
   }
-  const left = todos.filter((t) => !t.done).length;
+  const left = todos.filter((x) => !x.done).length;
   document.getElementById("todo-count")!.textContent =
-    todos.length === 0 ? "還沒有待辦，新增一件吧喵～" : `還剩 ${left} 件，已完成 ${todos.length - left} 件`;
+    todos.length === 0 ? t("todo.empty") : t("todo.count", { left, done: todos.length - left });
 }
 
-async function toggle(t: Todo, done: boolean): Promise<void> {
-  t.done = done;
-  t.doneAt = done ? new Date().toISOString() : undefined;
+async function toggle(item: Todo, done: boolean): Promise<void> {
+  item.done = done;
+  item.doneAt = done ? new Date().toISOString() : undefined;
   await save();
   if (done) {
     const allDone = todos.every((x) => x.done);
@@ -61,6 +63,11 @@ async function toggle(t: Todo, done: boolean): Promise<void> {
 export async function setupTodos(): Promise<void> {
   todos = (await api.loadData<Todo[]>("todos")) ?? [];
   render();
+  // 在聊天裡請角色新增／完成待辦時，這裡也要更新
+  await listen(EV.todosChanged, async () => {
+    todos = (await api.loadData<Todo[]>("todos")) ?? [];
+    render();
+  });
 
   const input = document.getElementById("todo-input") as HTMLInputElement;
   document.getElementById("todo-form")!.addEventListener("submit", async (e) => {
@@ -73,7 +80,7 @@ export async function setupTodos(): Promise<void> {
   });
 
   document.getElementById("todo-clear")!.addEventListener("click", async () => {
-    todos = todos.filter((t) => !t.done);
+    todos = todos.filter((x) => !x.done);
     await save();
   });
 }

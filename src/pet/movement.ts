@@ -16,7 +16,7 @@ export class Mover {
   private bounds = { left: 0, top: 0, right: 1920, bottom: 1080 };
   private scale = 1;
 
-  /** 啟動時：把柑柑放在螢幕右下角（工作列上面） */
+  /** 啟動時：把角色放在螢幕右下角（工作列上面） */
   async init(): Promise<void> {
     const size = await win.outerSize();
     this.width = size.width;
@@ -59,7 +59,7 @@ export class Mover {
     void this.apply();
   }
 
-  /** 放開後：確保柑柑沒有掉到螢幕外面 */
+  /** 放開後：確保角色沒有掉到螢幕外面 */
   async settle(): Promise<void> {
     await this.refreshBounds();
     this.x = Math.min(Math.max(this.x, this.bounds.left), this.bounds.right - this.width);

@@ -4,6 +4,7 @@
 // =============================================================
 import { emit } from "@tauri-apps/api/event";
 import { api } from "../common/api";
+import { t } from "../common/i18n";
 import { EV } from "../common/events";
 
 export async function setupClaude(): Promise<void> {
@@ -12,30 +13,31 @@ export async function setupClaude(): Promise<void> {
 
   async function refresh(): Promise<void> {
     const has = await api.hasApiKey();
-    status.textContent = has ? "已設定金鑰 ✅（點柑柑就能聊天）" : "尚未設定（聊天功能已隱藏）";
+    status.textContent = has ? "✅ " + t("claude.hasKey") : t("claude.noKey");
   }
 
   document.getElementById("key-form")!.addEventListener("submit", async (e) => {
     e.preventDefault();
     const key = input.value.trim();
     if (!key) return;
-    if (!key.startsWith("sk-ant-") && !confirm("這看起來不像 Anthropic 的金鑰（通常以 sk-ant- 開頭），仍要儲存嗎？")) return;
+    if (!key.startsWith("sk-ant-") && !confirm(t("claude.notAntKey"))) return;
     try {
       await api.setApiKey(key);
       input.value = "";
       await refresh();
       await emit(EV.apiKeyChanged);
     } catch (err) {
-      alert(`儲存失敗：${err}`);
+      alert(t("claude.saveFailed") + err);
     }
   });
 
   document.getElementById("key-clear")!.addEventListener("click", async () => {
-    if (!confirm("確定要刪除金鑰嗎？")) return;
+    if (!confirm(t("claude.clearConfirm"))) return;
     await api.clearApiKey();
     await refresh();
     await emit(EV.apiKeyChanged);
   });
 
+  document.getElementById("open-claude")!.addEventListener("click", () => api.openInClaude(""));
   await refresh();
 }
