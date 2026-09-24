@@ -1,1 +1,302 @@
-# table-pet_windows
+# desk-pet：桌面寵物「柑柑」
+
+![柑柑](app-icon.png)
+
+一隻住在 Windows 桌面上的橘色小貓。會走來走去、打瞌睡、陪你專心工作，
+也能幫你記待辦、跑番茄鐘、提醒事情。如果填了 Anthropic API 金鑰，還可以跟牠聊天。
+
+使用 [Tauri 2](https://tauri.app/) 製作，後端是 Rust，前端是 TypeScript，沒有用前端框架。
+
+---
+
+## 角色設定：柑柑
+
+柑柑是一隻橘色小貓，圓滾滾的，看起來就像一顆剛摘下來的蜜柑，頭上還長著一片小葉子。
+傳說牠是從冬天暖桌上那籃橘子裡滾出來的，因為太喜歡暖呼呼的地方，就住進了你的螢幕角落。
+
+- **個性**：溫暖、黏人、有一點小迷糊
+- **你在忙**：安靜陪著你，偶爾小聲加油
+- **你離開太久**：縮成一團睡著，頭上冒出小 z
+- **太晚還不睡**：擔心地碎碎念
+- **你完成待辦**：開心得跳起來，身邊冒出星星
+- **口頭禪**：「……喵～」
+- **喜歡**：暖桌、陽光、被摸頭　**討厭**：熬夜、被拎太久
+
+柑柑是這個專案的原創角色，外型和設定都不是模仿既有品牌的吉祥物或角色。
+
+---
+
+## 功能
+
+| 功能 | 說明 |
+|---|---|
+| 基本行為 | 狀態機：閒置、走路、睡覺、被拖曳、點擊反應 |
+| 電腦互動 | 用 Windows 閒置時間 API 判斷你在忙還是離開了。**只讀閒置秒數，不記錄任何按鍵內容** |
+| 台詞 | `lines.json` 依情境分類（打招呼、閒置、深夜、完成待辦…），可以自己新增 |
+| 待辦／番茄鐘／提醒 | 資料都存在本機的 JSON 檔 |
+| Claude 對話 | 點柑柑打開對話泡泡。沒有填金鑰時，這個功能會自動隱藏 |
+| 造型 | `skins/` 資料夾，一個造型 = `manifest.json` + 精靈圖，可以從托盤切換 |
+| 托盤與設定 | 右下角托盤選單，加上一個設定視窗，管理以上所有功能 |
+
+### 操作方式
+
+- **左鍵點柑柑**：互動。有金鑰的話會打開聊天泡泡
+- **按住拖曳**：把柑柑搬到別的地方
+- **右鍵點柑柑**：打開設定視窗
+- **托盤圖示右鍵**：顯示或隱藏、切換造型、番茄鐘、設定、結束
+
+柑柑周圍透明的地方可以直接點到後面的視窗，不會擋住你操作。
+
+---
+
+## 在 Windows 上建置
+
+### 1. 安裝需要的工具（只要裝一次）
+
+1. **Node.js 20 以上**：到 <https://nodejs.org/> 下載 LTS 版本
+2. **Rust**：到 <https://rustup.rs/> 下載 `rustup-init.exe`，執行後一路按 Enter
+3. **Microsoft C++ Build Tools**：到 <https://visualstudio.microsoft.com/visual-cpp-build-tools/> 下載，
+   安裝時勾選「**使用 C++ 的桌面開發**」
+4. **WebView2**：Windows 10、11 通常已經內建，不用另外裝
+
+### 2. 下載專案並安裝套件
+
+```powershell
+git clone https://github.com/kirishimarisano-rgb/table-pet_windows.git
+cd table-pet_windows
+npm install
+```
+
+### 3. 開發模式（改程式馬上看結果）
+
+```powershell
+npm run tauri dev
+```
+
+第一次會編譯比較久，大約 3～10 分鐘。之後就快很多。
+
+### 4. 打包成安裝檔
+
+```powershell
+npm run tauri build
+```
+
+完成後，安裝檔在：
+
+- `src-tauri\target\release\bundle\nsis\desk-pet_0.1.0_x64-setup.exe`：一般安裝程式，**推薦用這個**
+- `src-tauri\target\release\bundle\msi\desk-pet_0.1.0_x64_zh-TW.msi`：MSI 安裝檔（實際檔名可能略有不同）
+
+### 用 GitHub Actions 自動打包
+
+每次 push 到 GitHub，`.github/workflows/build.yml` 都會在 Windows 環境自動打包：
+
+- 到 repo 的 **Actions** 分頁，點最新一次執行，在最下面的 **Artifacts** 下載 `desk-pet-windows`
+- 推送 `v` 開頭的 tag（例如 `git tag v0.1.0 && git push --tags`），會自動建立 Release 並附上安裝檔
+
+---
+
+## 資料存在哪裡？
+
+所有資料都在這台電腦上：
+
+```
+%APPDATA%\tw.deskpet.kankan\
+├─ settings.json    設定
+├─ todos.json       待辦
+├─ reminders.json   提醒
+├─ lines.json       台詞（第一次啟動時從內建版本複製過來）
+├─ secrets.json     API 金鑰（只有你的電腦上有）
+└─ skins\           自訂造型
+```
+
+在設定視窗的「一般」分頁按「**開啟資料夾**」就能直接打開這個資料夾。
+想找這個路徑，也可以在檔案總管的網址列貼上 `%APPDATA%\tw.deskpet.kankan`。
+
+---
+
+## 如何新增台詞
+
+1. 打開設定視窗，切到「**台詞**」分頁，按「**開啟資料夾**」
+2. 用記事本（或 VS Code）打開 `lines.json`
+3. 在想要的分類裡加一句。**句子之間要用逗號隔開，最後一句後面不能有逗號**：
+
+```json
+"idle": [
+  "喵～（伸懶腰）",
+  "記得喝水喵！",
+  "這是我新加的台詞喵！"
+]
+```
+
+4. 存檔，回到設定視窗按「**重新載入**」
+
+### 內建的分類
+
+| 分類 | 什麼時候說 |
+|---|---|
+| `greeting`、`greeting_morning`、`greeting_afternoon`、`greeting_evening` | 啟動時打招呼 |
+| `idle` | 定期自言自語 |
+| `busy` | 你正在打字或操作時 |
+| `away_return` | 你離開後回來 |
+| `late_night` | 深夜 23:00～05:00 |
+| `todo_done`、`todo_all_done` | 完成待辦、完成全部待辦 |
+| `click`、`drag`、`drop` | 被點、被拎起來、被放下 |
+| `pomodoro_start`、`pomodoro_break`、`pomodoro_break_end` | 番茄鐘 |
+| `reminder` | 提醒的開頭，後面會接上提醒內容 |
+
+- 想恢復原本的台詞，按「**還原預設台詞**」
+- 想改「內建」的台詞，也就是給其他人的預設值，可以編輯 repo 根目錄的 `lines.json`，然後重新建置
+
+新增一個自己的分類很容易，在 JSON 裡加一個新的 key 就行。
+不過要讓柑柑在特定時機說出這個分類，需要改程式：在 `src/main.ts` 呼叫 `say("你的分類")`。
+
+---
+
+## 如何新增造型
+
+一個造型就是一個資料夾，裡面放：
+
+```
+my-skin/
+├─ manifest.json
+└─ sprite.png
+```
+
+### 精靈圖 `sprite.png`
+
+一張大圖，切成很多一樣大小的格子，**每一列是一個動畫**：
+
+```
+第 0 列：idle   閒置   □□□□
+第 1 列：walk   走路   □□□□
+第 2 列：sleep  睡覺   □□
+第 3 列：drag   被拖曳 □□
+第 4 列：react  開心   □□□□
+```
+
+- 背景要**透明**（PNG）
+- 角色面向**左邊**。往右走時程式會自動左右翻轉
+
+### `manifest.json`
+
+```json
+{
+  "name": "我的造型",
+  "author": "你的名字",
+  "image": "sprite.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "scale": 4,
+  "animations": {
+    "idle":  { "row": 0, "frames": 4, "fps": 3 },
+    "walk":  { "row": 1, "frames": 4, "fps": 8 },
+    "sleep": { "row": 2, "frames": 2, "fps": 1.5 },
+    "drag":  { "row": 3, "frames": 2, "fps": 6 },
+    "react": { "row": 4, "frames": 4, "fps": 8 }
+  }
+}
+```
+
+| 欄位 | 意思 |
+|---|---|
+| `frameWidth` / `frameHeight` | 每一格的寬高（像素） |
+| `scale` | 顯示時放大幾倍（像素畫建議 3～4） |
+| `row` | 這個動畫在第幾列（從 0 開始數） |
+| `frames` | 這個動畫有幾格 |
+| `fps` | 每秒播放幾格 |
+
+缺少的動畫會自動改用 `idle`。
+
+### 放在哪裡？
+
+- **方法 A：不用重新建置（推薦）**。把資料夾放進 `%APPDATA%\tw.deskpet.kankan\skins\`，
+  在設定視窗的「造型」分頁按「重新掃描」，再從托盤或設定視窗切換
+- **方法 B：跟程式一起打包**。放進 repo 的 `skins/` 資料夾，再重新建置。
+  除了 `skins/default/`，其他造型都已經寫進 `.gitignore`，不會被上傳到 GitHub
+
+資料夾名稱就是造型 id，只能用英文、數字、`-` 和 `_`。
+
+### 修改預設造型
+
+柑柑的像素圖是用程式畫的，想修改可以編輯 `scripts/gen-default-skin.mjs`，然後執行：
+
+```powershell
+npm run gen:skin
+npx tauri icon app-icon.png -o src-tauri/icons   # 也想更新程式圖示的話
+```
+
+---
+
+## 如何填 Anthropic API 金鑰（Claude 對話）
+
+1. 到 <https://console.anthropic.com/> 註冊並建立 API 金鑰。金鑰以 `sk-ant-` 開頭。
+   使用 API 會依用量付費。
+2. 右鍵點柑柑，打開設定，切到「**Claude**」分頁
+3. 把金鑰貼進輸入框，按「**儲存金鑰**」
+4. 左鍵點柑柑，就會出現對話泡泡
+
+### 關於安全
+
+- 金鑰只存在你電腦上的 `%APPDATA%\tw.deskpet.kankan\secrets.json`，**不會寫進這個 repo**
+- 金鑰只有 Rust 後端會讀取，網頁介面拿不到金鑰本身，只知道「有沒有設定」
+- `.gitignore` 已經排除 `secrets.json`、`.env`，避免不小心 commit
+- 不想用了就按「**刪除金鑰**」。聊天功能會自動隱藏
+- 對話紀錄只存在記憶體裡，關掉程式就消失
+
+### 對話設定
+
+- **模型**：預設是 `claude-sonnet-5`，也可以改成 `claude-opus-5`（比較聰明、比較貴）
+  或 `claude-haiku-4-5`（最快、最便宜）
+- **思考程度（effort）**：預設 `medium`。`low` 比較快、比較省，`high` 會想得比較多
+
+---
+
+## 專案結構
+
+```
+├─ index.html              桌寵主視窗
+├─ settings.html           設定視窗
+├─ lines.json              內建台詞
+├─ skins/default/          內建造型（柑柑）
+├─ scripts/gen-default-skin.mjs  用程式畫出柑柑的像素圖
+├─ src/                    前端（TypeScript）
+│  ├─ main.ts              桌寵主程式：把下面各模組接起來
+│  ├─ pet/
+│  │  ├─ stateMachine.ts   狀態機：什麼時候閒置、走路、睡覺…
+│  │  ├─ animator.ts       播放精靈圖動畫
+│  │  ├─ movement.ts       移動視窗、走路、拖曳
+│  │  ├─ clickthrough.ts   透明處讓滑鼠穿透
+│  │  ├─ activity.ts       判斷使用者在忙或離開
+│  │  ├─ pomodoro.ts       番茄鐘計時
+│  │  └─ reminders.ts      檢查提醒時間
+│  ├─ bubble/
+│  │  ├─ speech.ts         台詞泡泡
+│  │  └─ chat.ts           Claude 對話泡泡
+│  ├─ settings/            設定視窗各分頁
+│  └─ common/              共用：API 呼叫、設定、台詞、事件名稱
+└─ src-tauri/              後端（Rust）
+   ├─ tauri.conf.json      視窗設定（透明、無邊框、置頂）
+   └─ src/
+      ├─ main.rs           進入點
+      ├─ storage.rs        本機 JSON 讀寫
+      ├─ idle.rs           Windows 閒置秒數
+      ├─ lines.rs          台詞檔
+      ├─ skins.rs          造型
+      ├─ claude.rs         Claude API 與金鑰
+      └─ tray.rs           托盤選單、開啟設定視窗
+```
+
+### 想改行為的話，從這裡開始看
+
+- **多久會開始走路、走多久**：`src/pet/stateMachine.ts` 的 `set()` 和 `update()`
+- **走路速度**：`src/pet/movement.ts` 的 `step()`
+- **柑柑聊天時的個性**：`src-tauri/src/claude.rs` 的 `SYSTEM_PROMPT`
+- **托盤選單內容**：`src-tauri/src/tray.rs` 的 `build_menu()`
+
+---
+
+## 隱私說明
+
+- 閒置偵測只呼叫 Windows 的 `GetLastInputInfo`，拿到的只有「最後一次操作是什麼時候」，
+  **不會、也無法知道你按了哪些鍵**
+- 所有資料都存在本機。唯一的網路連線是你主動使用 Claude 對話時，呼叫 `api.anthropic.com`
