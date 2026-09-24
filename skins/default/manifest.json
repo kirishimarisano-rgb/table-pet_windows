@@ -1,0 +1,15 @@
+{
+  "name": "柑柑（預設）",
+  "author": "desk-pet",
+  "image": "sprite.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "scale": 4,
+  "animations": {
+    "idle":  { "row": 0, "frames": 4, "fps": 3 },
+    "walk":  { "row": 1, "frames": 4, "fps": 8 },
+    "sleep": { "row": 2, "frames": 2, "fps": 1.5 },
+    "drag":  { "row": 3, "frames": 2, "fps": 6 },
+    "react": { "row": 4, "frames": 4, "fps": 8 }
+  }
+}
