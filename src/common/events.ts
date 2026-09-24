@@ -18,6 +18,10 @@ export const EV = {
   apiKeyChanged: "api-key-changed",
   /** 桌寵觸發了提醒（設定視窗要重新整理清單） */
   remindersChanged: "reminders-changed",
+  /** 待辦被修改（例如透過聊天新增） */
+  todosChanged: "todos-changed",
+  /** 餵點心（托盤或小選單） */
+  petFeed: "pet-feed",
   /** 台詞檔重新載入 */
   linesChanged: "lines-changed",
 } as const;

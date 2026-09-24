@@ -30,3 +30,20 @@ export function todayStr(d = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
+/** 互動紀錄（存在 stats.json） */
+export interface Stats {
+  /** 好感度，互動會慢慢增加 */
+  affection: number;
+  /** 今天餵了幾次（YYYY-MM-DD → 次數） */
+  fedDate?: string;
+  fedCount?: number;
+}
+
+/** 好感度等級（0～4），每一級需要的點數 */
+export const AFFECTION_LEVELS = [0, 10, 30, 60, 100];
+export function affectionLevel(points: number): number {
+  let lv = 0;
+  AFFECTION_LEVELS.forEach((need, i) => { if (points >= need) lv = i; });
+  return lv;
+}

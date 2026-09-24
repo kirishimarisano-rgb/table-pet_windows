@@ -105,7 +105,6 @@ html, body {
 }
 .chat-line { margin: 3px 0; padding-right: 14px; white-space: pre-wrap; }
 .chat-line.user { color: #8a6a55; text-align: right; }
-.chat-line.user::before { content: "你："; }
 .chat-line.assistant { color: var(--brown); }
 .chat-line.error { color: #c0392b; }
 .chat form { display: flex; gap: 4px; }
@@ -128,6 +127,61 @@ html, body {
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+
+.chat-claude {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #b86a3c;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---- 右鍵小選單 ---- */
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: 240px;
+  margin-bottom: 6px;
+  padding: 6px;
+  background: var(--cream);
+  border: 3px solid var(--brown);
+  border-radius: 14px;
+  animation: pop 0.15s ease-out;
+}
+.menu button {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 8px;
+  background: #ffe2bd;
+  color: var(--brown);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.menu button:hover { background: var(--orange); }
+
+/* ---- 點心 ---- */
+.snack {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  font-size: 22px;
+  transform: translateX(-50%);
+  animation: snack 1.2s ease-in forwards;
+  pointer-events: none;
+}
+@keyframes snack {
+  0% { transform: translate(-50%, -40px); opacity: 0; }
+  30% { opacity: 1; }
+  70% { transform: translate(-50%, 30px); opacity: 1; }
+  100% { transform: translate(-50%, 30px) scale(0.3); opacity: 0; }
 }
 
 @keyframes pop {

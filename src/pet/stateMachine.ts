@@ -1,16 +1,17 @@
 // =============================================================
-// 柑柑的狀態機
+// 桌寵角色的狀態機
 //
 //   idle（閒置）──時間到──▶ walk（走路）──時間到──▶ idle
 //     │                                            
 //     ├─使用者離開──▶ sleep（睡覺）──使用者回來──▶ react ─▶ idle
 //     ├─被點擊────▶ react（開心反應）──時間到──▶ idle
-//     └─被拖曳────▶ drag（被拎著）──放開──▶ react ─▶ idle
+//     ├─被拖曳────▶ drag（被拎著）──放開──▶ react ─▶ idle
+//     └─等待 Claude 回覆─▶ think（思考中）──收到回覆──▶ react ─▶ idle
 //
 // 所有「什麼時候換狀態」的規則都寫在 update() 裡。
 // =============================================================
 
-export type PetState = "idle" | "walk" | "sleep" | "drag" | "react";
+export type PetState = "idle" | "walk" | "sleep" | "drag" | "react" | "think";
 
 /** 使用者的電腦使用狀態（由 activity.ts 判斷） */
 export type Activity = "busy" | "idle" | "away";
@@ -39,7 +40,7 @@ export class PetStateMachine {
     this.time = 0;
     this.duration =
       duration ??
-      { idle: rand(4, 10), walk: rand(2, 5), react: 1.2, sleep: Infinity, drag: Infinity }[state];
+      { idle: rand(4, 10), walk: rand(2, 5), react: 1.2, sleep: Infinity, drag: Infinity, think: Infinity }[state];
     this.onEnter(state, prev);
   }
 
@@ -65,7 +66,8 @@ export class PetStateMachine {
 
       case "sleep":
       case "drag":
-        // 這兩個狀態由外部結束（wake() / endDrag()）
+      case "think":
+        // 這些狀態由外部結束（wake() / endDrag() / react()）
         return;
     }
   }

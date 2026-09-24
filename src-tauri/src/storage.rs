@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 /// 前端可以透過 load_data / save_data 存取的檔案（不含副檔名）
-const ALLOWED: &[&str] = &["settings", "todos", "reminders"];
+const ALLOWED: &[&str] = &["settings", "todos", "reminders", "stats"];
 
 /// 取得資料夾路徑，不存在就建立
 pub fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
