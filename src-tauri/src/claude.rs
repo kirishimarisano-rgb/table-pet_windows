@@ -181,8 +181,11 @@ fn run_tool(app: &AppHandle, name: &str, input: &Value, now_iso: &str, todo_done
             let mut list = read_json(app, "reminders").as_array().cloned().unwrap_or_default();
             let mut r = json!({ "id": new_id(now_ms), "text": text, "kind": kind, "at": at });
             // 每天的提醒：如果今天的時間已經過了，從明天開始
-            if kind == "daily" && now_iso.len() >= 16 && at <= &now_iso[11..16] {
-                r["lastFiredDate"] = json!(&now_iso[..10]);
+            // now_iso 來自前端，用 get() 取子字串，格式不對也不會當掉
+            if let (true, Some(hhmm), Some(date)) = (kind == "daily", now_iso.get(11..16), now_iso.get(..10)) {
+                if at <= hhmm {
+                    r["lastFiredDate"] = json!(date);
+                }
             }
             list.push(r);
             write_json(app, "reminders", &Value::Array(list))?;
@@ -255,7 +258,12 @@ pub async fn claude_chat(app: AppHandle, messages: Vec<ChatMessage>, context: St
         return Err(msg(lang, "no_msg"));
     }
 
-    let client = reqwest::Client::new();
+    // 設定逾時：網路卡住時不會一直停在「思考中」
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(15))
+        .timeout(std::time::Duration::from_secs(180))
+        .build()
+        .map_err(|e| e.to_string())?;
     let mut todo_done = false;
 
     for _ in 0..MAX_TOOL_ROUNDS {
@@ -366,8 +374,9 @@ pub fn open_in_claude(app: AppHandle, prompt: String) -> Result<(), String> {
 #[tauri::command]
 pub fn open_url(app: AppHandle, url: String) -> Result<(), String> {
     use tauri_plugin_opener::OpenerExt;
-    const ALLOWED: &[&str] = &["https://github.com/kirishimarisano-rgb/table-pet_windows", "https://claude.ai/"];
-    if !ALLOWED.iter().any(|p| url.starts_with(p)) {
+    // 前綴都以 / 結尾，避免 ".../table-pet_windows-evil" 這種相似網址混過去
+    const ALLOWED: &[&str] = &["https://github.com/kirishimarisano-rgb/table-pet_windows/", "https://claude.ai/"];
+    if !ALLOWED.iter().any(|p| url.starts_with(p)) || url.contains(char::is_whitespace) {
         return Err("不允許開啟這個網址".into());
     }
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())

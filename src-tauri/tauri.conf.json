@@ -26,7 +26,10 @@
         "focus": false
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'",
+      "devCsp": null
+    }
   },
   "bundle": {
     "active": true,

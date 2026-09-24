@@ -10,8 +10,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 預設只給讀取權限；只有打包工作需要寫入（建立 Release）
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   # 先確認沒有私人角色、金鑰被 commit 進來；沒通過就不打包
@@ -25,6 +26,8 @@ jobs:
   build-windows:
     needs: privacy-check
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
