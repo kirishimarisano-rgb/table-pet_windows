@@ -13,6 +13,7 @@ secrets.json
 # ---- 造型：只保留預設造型，其他自己加的造型不上傳 ----
 skins/*
 !skins/default/
+!skins/kanade/
 !skins/README.md
 
 # ---- 其他 ----

@@ -154,8 +154,8 @@ function drawKankan(p) {
 
   // 9. 裝飾：z 和星星
   if (o.zz >= 0) {
-    const zx = 24, zy = 2 + o.zz;
-    [[0, 0], [1, 0], [2, 0], [3, 0], [2, 1], [1, 2], [0, 3], [1, 3], [2, 3], [3, 3]].forEach(([dx, dy]) => put(f, zx + dx, zy + dy, C.zz));
+    const zx = 24, zy = 1 + o.zz;
+    [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [3, 1], [2, 2], [1, 3], [0, 4], [1, 4], [2, 4], [3, 4], [4, 4]].forEach(([dx, dy]) => put(f, zx + dx, zy + dy, C.zz));
   }
   if (o.spark) {
     for (const [sx, sy] of [[3, 6], [27, 9]]) {
