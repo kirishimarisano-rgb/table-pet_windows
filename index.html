@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>柑柑</title>
+    <link rel="stylesheet" href="/src/pet.css" />
+  </head>
+  <body>
+    <!-- 整個視窗是透明的，只有 .hit 的元素可以被點到（見 clickthrough.ts） -->
+    <div id="stage">
+      <!-- 台詞泡泡 -->
+      <div id="bubble" class="bubble hit hidden"></div>
+
+      <!-- Claude 對話泡泡（沒有金鑰時永遠不會出現） -->
+      <div id="chat" class="chat hit hidden">
+        <button class="chat-close" title="關閉">×</button>
+        <div class="chat-log"></div>
+        <form>
+          <input type="text" placeholder="跟柑柑說話…" maxlength="500" />
+          <button type="submit">送出</button>
+        </form>
+      </div>
+
+      <!-- 柑柑本體 -->
+      <div id="pet-wrap">
+        <canvas id="pet" class="hit"></canvas>
+        <div id="pomo" class="pomo hit hidden"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

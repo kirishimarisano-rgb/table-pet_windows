@@ -1,0 +1,136 @@
+/* ===== 桌寵主視窗樣式 ===== */
+:root {
+  --cream: #fff6e8;
+  --brown: #7a4a2a;
+  --orange: #ffb35c;
+  --pink: #ff8fa3;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent; /* 視窗透明的關鍵 */
+  overflow: hidden;
+  user-select: none;
+  font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+}
+
+#stage {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.hidden { display: none !important; }
+
+/* ---- 柑柑 ---- */
+#pet-wrap { position: relative; }
+#pet {
+  display: block;
+  image-rendering: pixelated; /* 放大時保持像素顆粒感 */
+  cursor: grab;
+}
+#pet:active { cursor: grabbing; }
+
+/* ---- 番茄鐘標籤 ---- */
+.pomo {
+  position: absolute;
+  right: -6px;
+  bottom: 4px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--brown);
+  color: var(--cream);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pomo.break { background: #6a8f5a; }
+
+/* ---- 台詞泡泡 ---- */
+.bubble {
+  position: relative;
+  max-width: 220px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: var(--cream);
+  border: 3px solid var(--brown);
+  border-radius: 14px;
+  color: var(--brown);
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  animation: pop 0.2s ease-out;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-top-color: var(--brown);
+}
+
+/* ---- Claude 對話泡泡 ---- */
+.chat {
+  position: relative;
+  width: 240px;
+  margin-bottom: 6px;
+  padding: 8px;
+  background: var(--cream);
+  border: 3px solid var(--brown);
+  border-radius: 14px;
+  box-sizing: border-box;
+  animation: pop 0.2s ease-out;
+}
+.chat-close {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  border: none;
+  background: none;
+  color: var(--brown);
+  font-size: 16px;
+  cursor: pointer;
+}
+.chat-log {
+  max-height: 96px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  user-select: text;
+}
+.chat-line { margin: 3px 0; padding-right: 14px; white-space: pre-wrap; }
+.chat-line.user { color: #8a6a55; text-align: right; }
+.chat-line.user::before { content: "你："; }
+.chat-line.assistant { color: var(--brown); }
+.chat-line.error { color: #c0392b; }
+.chat form { display: flex; gap: 4px; }
+.chat input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 2px solid var(--orange);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.chat button[type="submit"] {
+  padding: 2px 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--orange);
+  color: var(--brown);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+@keyframes pop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

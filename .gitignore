@@ -1,0 +1,21 @@
+# ---- 建置產物 ----
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ---- 個人資料，絕對不要進 repo ----
+secrets.json
+*.local.json
+.env
+.env.*
+
+# ---- 造型：只保留預設造型，其他自己加的造型不上傳 ----
+skins/*
+!skins/default/
+!skins/README.md
+
+# ---- 其他 ----
+.DS_Store
+Thumbs.db
+*.log
