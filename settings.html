@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>柑柑的設定</title>
+    <link rel="stylesheet" href="/src/settings/settings.css" />
+  </head>
+  <body>
+    <nav id="tabs">
+      <button data-tab="todos" class="active">待辦</button>
+      <button data-tab="pomodoro">番茄鐘</button>
+      <button data-tab="reminders">提醒</button>
+      <button data-tab="general">一般</button>
+      <button data-tab="lines">台詞</button>
+      <button data-tab="skins">造型</button>
+      <button data-tab="claude">Claude</button>
+      <button data-tab="about">關於柑柑</button>
+    </nav>
+
+    <main>
+      <!-- ===== 待辦 ===== -->
+      <section id="tab-todos" class="active">
+        <form id="todo-form" class="row">
+          <input id="todo-input" type="text" placeholder="新增待辦…" maxlength="200" />
+          <button type="submit">新增</button>
+        </form>
+        <ul id="todo-list" class="list"></ul>
+        <p class="muted"><span id="todo-count"></span></p>
+        <button id="todo-clear" class="secondary">清除已完成</button>
+      </section>
+
+      <!-- ===== 番茄鐘 ===== -->
+      <section id="tab-pomodoro">
+        <div id="pomo-display" class="big-timer">--:--</div>
+        <p id="pomo-phase" class="center muted">未開始</p>
+        <div class="row center">
+          <button data-pomo="work">開始專注</button>
+          <button data-pomo="break" class="secondary">開始休息</button>
+          <button data-pomo="stop" class="secondary">停止</button>
+        </div>
+        <h3>時間設定</h3>
+        <label>專注（分鐘）<input type="number" min="1" max="180" data-setting="pomodoro.workMin" /></label>
+        <label>休息（分鐘）<input type="number" min="1" max="60" data-setting="pomodoro.breakMin" /></label>
+        <label class="check"><input type="checkbox" data-setting="pomodoro.autoBreak" /> 專注結束後自動開始休息</label>
+      </section>
+
+      <!-- ===== 提醒 ===== -->
+      <section id="tab-reminders">
+        <form id="rem-form">
+          <label>內容<input id="rem-text" type="text" maxlength="200" placeholder="例如：喝水、開會" required /></label>
+          <label>類型
+            <select id="rem-kind">
+              <option value="once">指定時間一次</option>
+              <option value="daily">每天</option>
+            </select>
+          </label>
+          <label id="rem-once-label">時間<input id="rem-datetime" type="datetime-local" /></label>
+          <label id="rem-daily-label" class="hidden">每天幾點<input id="rem-time" type="time" /></label>
+          <button type="submit">新增提醒</button>
+        </form>
+        <ul id="rem-list" class="list"></ul>
+      </section>
+
+      <!-- ===== 一般 ===== -->
+      <section id="tab-general">
+        <label class="check"><input type="checkbox" data-setting="walkEnabled" /> 讓柑柑自己走來走去</label>
+        <label>自言自語間隔（分鐘，0 = 安靜）<input type="number" min="0" max="120" data-setting="talkIntervalMin" /></label>
+        <label>大小
+          <select data-setting="petScale" data-type="number">
+            <option value="0.75">小</option>
+            <option value="1">中</option>
+            <option value="1.25">大</option>
+          </select>
+        </label>
+        <h3>電腦使用偵測</h3>
+        <p class="muted">只讀取「多久沒碰鍵盤滑鼠」的秒數，不會記錄任何按鍵內容。</p>
+        <label>閒置少於幾秒算「在忙」<input type="number" min="5" max="600" data-setting="activity.busySec" /></label>
+        <label>閒置超過幾秒算「離開」（柑柑會去睡覺）<input type="number" min="30" max="7200" data-setting="activity.awaySec" /></label>
+        <p class="muted">目前閒置：<span id="idle-now">-</span> 秒</p>
+        <h3>資料</h3>
+        <button id="open-data" class="secondary">開啟資料夾</button>
+      </section>
+
+      <!-- ===== 台詞 ===== -->
+      <section id="tab-lines">
+        <p>台詞存在資料夾裡的 <code>lines.json</code>，用記事本打開就能新增。改完按「重新載入」。</p>
+        <div class="row">
+          <button id="lines-open" class="secondary">開啟資料夾</button>
+          <button id="lines-reload">重新載入</button>
+          <button id="lines-reset" class="secondary">還原預設台詞</button>
+        </div>
+        <table id="lines-table"></table>
+      </section>
+
+      <!-- ===== 造型 ===== -->
+      <section id="tab-skins">
+        <div id="skin-list" class="cards"></div>
+        <p class="muted">自訂造型：把造型資料夾放進「造型資料夾」後按「重新掃描」。格式請見 README。</p>
+        <div class="row">
+          <button id="skins-open" class="secondary">開啟造型資料夾</button>
+          <button id="skins-reload">重新掃描</button>
+        </div>
+      </section>
+
+      <!-- ===== Claude ===== -->
+      <section id="tab-claude">
+        <p>狀態：<strong id="key-status">讀取中…</strong></p>
+        <p class="muted">
+          設定 Anthropic API 金鑰後，點柑柑就能聊天。金鑰只存在這台電腦的 <code>secrets.json</code>，
+          不會上傳到任何地方（除了呼叫 Anthropic API 本身）。沒有金鑰時，聊天功能會自動隱藏。
+        </p>
+        <form id="key-form" class="row">
+          <input id="key-input" type="password" placeholder="sk-ant-…" autocomplete="off" />
+          <button type="submit">儲存金鑰</button>
+        </form>
+        <button id="key-clear" class="secondary">刪除金鑰</button>
+        <h3>對話設定</h3>
+        <label class="check"><input type="checkbox" data-setting="claude.enabled" /> 點柑柑時打開對話泡泡</label>
+        <label>模型<input type="text" list="model-options" data-setting="claude.model" /></label>
+        <datalist id="model-options">
+          <option value="claude-sonnet-5"></option>
+          <option value="claude-opus-5"></option>
+          <option value="claude-haiku-4-5"></option>
+        </datalist>
+        <label>思考程度（effort）
+          <select data-setting="claude.effort">
+            <option value="low">low：快、便宜</option>
+            <option value="medium">medium：平衡（預設）</option>
+            <option value="high">high：想得比較多</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- ===== 關於 ===== -->
+      <section id="tab-about">
+        <div class="about">
+          <h2>柑柑</h2>
+          <p>
+            柑柑是一隻橘色小貓，圓滾滾的，看起來就像一顆剛摘下來的蜜柑，頭上還長著一片小葉子。
+            傳說它是從冬天暖桌上那籃橘子裡滾出來的，因為太喜歡暖呼呼的地方，就住進了你的螢幕角落。
+          </p>
+          <p>
+            個性溫暖又黏人，有一點小迷糊。你專心工作的時候它會安靜陪著；你離開太久，它就縮成一團睡著；
+            太晚還不睡，它會擔心地碎碎念。每當你完成一件待辦，它都會開心得跳起來——
+            對柑柑來說，看你把事情一件一件完成，就像看著橘子一瓣一瓣剝開一樣幸福。
+          </p>
+          <p class="muted">口頭禪：「……喵～」　喜歡：暖桌、陽光、被摸頭　討厭：熬夜、被拎太久</p>
+          <p class="muted">操作：左鍵點一下 → 互動／聊天；按住拖曳 → 搬家；右鍵 → 打開這個設定視窗。</p>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/settings/main.ts"></script>
+  </body>
+</html>

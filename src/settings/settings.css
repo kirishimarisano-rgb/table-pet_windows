@@ -1,0 +1,122 @@
+/* ===== 設定視窗樣式（暖色系） ===== */
+:root {
+  --bg: #fffaf2;
+  --card: #fff1dc;
+  --brown: #7a4a2a;
+  --orange: #ffb35c;
+  --orange-dark: #f08a3c;
+  --muted: #a08470;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--brown);
+  font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  font-size: 14px;
+}
+.hidden { display: none !important; }
+.muted { color: var(--muted); font-size: 13px; }
+.center { text-align: center; justify-content: center; }
+.error { color: #c0392b; }
+code { background: var(--card); padding: 0 4px; border-radius: 4px; }
+
+/* ---- 分頁列 ---- */
+#tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 8px 0;
+  background: var(--card);
+  border-bottom: 2px solid var(--orange);
+}
+#tabs button {
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 8px 8px 0 0;
+  color: var(--brown);
+  font: inherit;
+  cursor: pointer;
+}
+#tabs button.active { background: var(--orange); font-weight: bold; }
+
+main { padding: 16px 20px; }
+section { display: none; }
+section.active { display: block; }
+h3 { margin: 20px 0 8px; font-size: 15px; }
+
+/* ---- 表單 ---- */
+label { display: block; margin: 10px 0; }
+label input:not([type="checkbox"]), label select { display: block; width: 100%; margin-top: 4px; }
+label.check { display: flex; align-items: center; gap: 6px; }
+input, select {
+  padding: 6px 8px;
+  border: 2px solid #f3d3a8;
+  border-radius: 8px;
+  background: white;
+  color: var(--brown);
+  font: inherit;
+}
+input:focus, select:focus { outline: none; border-color: var(--orange); }
+button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--orange);
+  color: var(--brown);
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { background: var(--orange-dark); color: white; }
+button.secondary { background: var(--card); font-weight: normal; }
+button.secondary:hover { background: #f3d3a8; color: var(--brown); }
+button.link { background: none; color: var(--muted); font-weight: normal; padding: 2px 6px; }
+button.link:hover { color: #c0392b; background: none; }
+.row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.row input[type="text"], .row input[type="password"] { flex: 1; }
+
+/* ---- 清單 ---- */
+.list { list-style: none; padding: 0; margin: 12px 0; }
+.list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: var(--card);
+  border-radius: 8px;
+}
+.list li span { flex: 1; word-break: break-all; }
+.list li.done span { text-decoration: line-through; color: var(--muted); }
+
+/* ---- 番茄鐘 ---- */
+.big-timer {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 56px;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 造型卡片 ---- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  background: var(--card);
+  border: 2px solid transparent;
+  text-align: left;
+  font-weight: normal;
+}
+.card.selected { border-color: var(--orange-dark); }
+.card small { color: var(--muted); }
+
+/* ---- 台詞表 ---- */
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f3d3a8; }
+
+.about p { line-height: 1.8; }
