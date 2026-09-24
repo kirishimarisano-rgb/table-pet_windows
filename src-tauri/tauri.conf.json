@@ -41,7 +41,8 @@
     "resources": {
       "../lines/": "lines/",
       "../skins/default/": "skins/default/",
-      "../skins/kanade/": "skins/kanade/"
+      "../skins/kanade/": "skins/kanade/",
+      "../skins/shiori/": "skins/shiori/"
     }
   }
 }

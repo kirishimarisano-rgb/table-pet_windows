@@ -1,12 +1,12 @@
 # desk-pet：Windows 桌面寵物
 
-![柑柑](app-icon.png) ![小奏](skins/kanade/preview.png)
+![柑柑](app-icon.png) ![小奏](skins/kanade/preview.png) ![栞](skins/shiori/preview.png)
 
 住在 Windows 桌面上的小夥伴。會走來走去、打瞌睡、陪你專心工作，
 也能幫你記待辦、跑番茄鐘、提醒事情。如果填了 Anthropic API 金鑰，還可以跟牠聊天，
 請牠幫你新增待辦、設提醒。
 
-內建兩個角色：橘色小貓「**柑柑**」和夜空小精靈「**小奏**」，也可以加入你自己的角色。
+內建三個角色：橘色小貓「**柑柑**」、夜空小精靈「**小奏**」、書籤女孩「**栞**」，也可以加入你自己的角色。
 介面、台詞、聊天都支援**繁體中文、日本語、English**。
 
 使用 [Tauri 2](https://tauri.app/) 製作，後端是 Rust，前端是 TypeScript，沒有用前端框架。
@@ -40,9 +40,20 @@
 - **口頭禪**：「讓我想一想。」
 - **喜歡**：安靜的深夜、整理好的待辦、好問題　**討厭**：被催促、沒存檔
 
+### 栞（しおり）
+
+栞原本是夾在一本讀到一半的書裡的書籤，某天醒來變成了女孩。
+淺米色的長捲髮、一根壓不下去的呆毛，頭上別著橘色的星芒花髮夾，穿著白襯衫和滾金邊的咖啡色短斗篷。
+她是 64×64 的高清像素角色。
+
+- **個性**：好奇、體貼、誠實、思考周到。喜歡想法、文字和好問題，不確定的事會直說
+- **想事情時**：會歪著頭，頭上冒出小小的思考泡泡
+- **書籤的工作是記住你讀到哪裡**，所以她也會幫你記住工作做到哪裡
+- **口頭禪**：「嗯……我想想。」
+
 每個角色都有自己的台詞和聊天個性，換角色就換說話方式。
 
-柑柑和小奏都是這個專案的原創角色，外型和設定都不是模仿既有品牌的吉祥物或角色。
+柑柑、小奏、栞都不是模仿既有品牌的吉祥物或角色。
 
 ---
 
@@ -259,7 +270,7 @@ my-skin/
 把角色資料夾放進 `%APPDATA%\tw.deskpet.kankan\skins\`，在設定視窗的「角色」分頁按「重新掃描」，
 再從托盤或設定視窗切換就好，不用重新建置。
 
-> 私人角色**只放在這裡**。安裝檔只會包進公開的內建角色（`skins/default`、`skins/kanade`），
+> 私人角色**只放在這裡**。安裝檔只會包進公開的內建角色（`skins/default`、`skins/kanade`、`skins/shiori`），
 > 就算你把私人角色放在 repo 的 `skins/` 裡，它也不會被打包、不會被 commit（見下方「公開與私人怎麼分開」）。
 
 資料夾名稱就是造型 id，只能用英文、數字、`-` 和 `_`。
@@ -270,6 +281,7 @@ my-skin/
 
 - 柑柑：`scripts/gen-default-skin.mjs`，執行 `npm run gen:skin`
 - 小奏：`scripts/gen-kanade-skin.mjs`，執行 `node scripts/gen-kanade-skin.mjs`
+- 栞：`scripts/gen-shiori-skin.mjs`，執行 `node scripts/gen-shiori-skin.mjs`
 - 共用的繪圖工具：`scripts/pixel.mjs`
 
 也想更新程式圖示的話，再執行 `npx tauri icon app-icon.png -o src-tauri/icons`。
@@ -330,6 +342,7 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 ├─ lines/                  內建共用台詞（三種語言）
 ├─ skins/default/          內建角色：柑柑
 ├─ skins/kanade/           內建角色：小奏（含專屬台詞）
+├─ skins/shiori/           內建角色：栞（64×64 高清像素）
 ├─ scripts/                用程式畫角色像素圖（pixel.mjs 是共用工具）
 ├─ src/                    前端（TypeScript）
 │  ├─ main.ts              桌寵主程式：把下面各模組接起來
@@ -387,7 +400,7 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 
 | 公開（在 repo 裡） | 只在你電腦上（`%APPDATA%\tw.deskpet.kankan\`） |
 |---|---|
-| 程式、柑柑、小奏、預設台詞 | 你自己加的角色、你改過的台詞、設定、待辦、好感度、API 金鑰 |
+| 程式、柑柑、小奏、栞、預設台詞 | 你自己加的角色、你改過的台詞、設定、待辦、好感度、API 金鑰 |
 
 所以只要把自己的角色和台詞放在右邊那個資料夾，就是「你的版本」，不用維護兩份程式碼。
 
@@ -396,11 +409,11 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 一共有五層保護，任何一層擋下來就不會外流：
 
 1. **放的位置**：私人資料都在 `%APPDATA%`，根本不在 repo 資料夾裡
-2. **`.gitignore`**：`skins/` 裡只有 `default`、`kanade` 會被 git 追蹤；`secrets.json`、`.env` 一律忽略
+2. **`.gitignore`**：`skins/` 裡只有 `default`、`kanade`、`shiori` 會被 git 追蹤；`secrets.json`、`.env` 一律忽略
 3. **commit 前自動檢查**：在自己電腦上執行一次 `npm run setup-hooks`，之後每次 commit 都會跑
    `scripts/check-privacy.mjs`。它會擋下三種東西：私人角色、金鑰檔，以及內容裡有 `sk-ant-` 金鑰的檔案
 4. **GitHub Actions 檢查**：每次 push 都會先跑同一個隱私檢查，沒通過就不打包
-5. **安裝檔只包公開角色**：`tauri.conf.json` 只列出 `skins/default`、`skins/kanade`，
+5. **安裝檔只包公開角色**：`tauri.conf.json` 只列出 `skins/default`、`skins/kanade`、`skins/shiori`，
    所以就算你在自己電腦上建置，再把安裝檔分享出去，私人角色也不會被包進去
 
 想把某個角色改成公開，要改三個地方：
@@ -431,4 +444,4 @@ API 金鑰（按用量付費）和 Claude 的訂閱方案是**分開的**。
 
 ## 授權
 
-程式碼以 [MIT License](LICENSE) 授權。柑柑和小奏的角色設計也一併以 MIT 提供。
+程式碼以 [MIT License](LICENSE) 授權。柑柑、小奏、栞的角色設計也一併以 MIT 提供。

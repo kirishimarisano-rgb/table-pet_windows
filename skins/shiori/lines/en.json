@@ -1,0 +1,95 @@
+{
+  "_note": "Shiori's own lines. Categories here replace the shared ones; missing ones fall back to shared lines.",
+  "greeting": [
+    "Hi! What are we working on today? I'm with you.",
+    "You're here! Anything interesting happen today?",
+    "Okay, I'm ready. Where shall we start?"
+  ],
+  "greeting_morning": [
+    "Good morning. Water first, then let's pick the one most important thing?",
+    "Morning! Your mind's sharpest now; hardest task first?"
+  ],
+  "greeting_afternoon": [
+    "Good afternoon. Easy to get tired now; warm up with something small?",
+    "Afternoon~ I'll keep an eye on the time."
+  ],
+  "greeting_evening": [
+    "Good evening. You worked hard today.",
+    "Good evening. Want to look back on what you did today?"
+  ],
+  "idle": [
+    "Hmm... let me think.",
+    "(tilts head)",
+    "Call me any time you want to talk.",
+    "Rest your eyes for a moment; look at something far away.",
+    "I'm tidying up a thought I just had.",
+    "Good questions are often more interesting than answers.",
+    "Where did we leave off? I'll remember for you."
+  ],
+  "busy": [
+    "You're so focused. I'll keep you quiet company.",
+    "Keep going, I won't interrupt.",
+    "(softly) Nice rhythm."
+  ],
+  "away_return": [
+    "Welcome back! I spaced out a little.",
+    "You're back. Shall we pick up where we left off?",
+    "Welcome back. Did you get some rest?"
+  ],
+  "late_night": [
+    "It's late. Tomorrow-you will handle the rest even better.",
+    "Judgment slips late at night; sleep first?",
+    "I'm getting a little sleepy too... stop here for today?"
+  ],
+  "todo_done": [
+    "Done! Nicely done.",
+    "Another one finished. One step at a time.",
+    "Great, you can check that one off with confidence."
+  ],
+  "todo_all_done": [
+    "All done! That was a full day. Thank you for your hard work."
+  ],
+  "click": [
+    "Hm? What's up?",
+    "I'm listening.",
+    "(the ahoge bounces)"
+  ],
+  "drag": [
+    "Whoa, where are we going?",
+    "Wait, my hair clip is slipping!"
+  ],
+  "drop": [
+    "This spot's nice too.",
+    "Mm, good view."
+  ],
+  "pomodoro_start": [
+    "Let's focus; leave the clock to me.",
+    "Okay, just one thing for this stretch."
+  ],
+  "pomodoro_break": [
+    "Time's up! Let's stretch.",
+    "Take a break. Let the ideas settle."
+  ],
+  "pomodoro_break_end": [
+    "Break's over. Start the next round when you're ready."
+  ],
+  "reminder": [
+    "A reminder for you: "
+  ],
+  "pet": [
+    "...Thank you. That's a little embarrassing.",
+    "Hehe, head pats."
+  ],
+  "feed": [
+    "Thank you! Delicious.",
+    "For me? That makes me happy."
+  ],
+  "feed_full": [
+    "Thank you, but I'm full for today.",
+    "I appreciate it. Let's share one tomorrow."
+  ],
+  "love_up": [
+    "I think we're really in sync now.",
+    "I'm glad I get to be by your side."
+  ]
+}

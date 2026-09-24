@@ -101,3 +101,31 @@ export function writeSheet(path, anims, size, fps) {
 export function writeIcon(path, frame, px) {
   writeFileSync(path, encodePng(frame.w * px, frame.h * px, (x, y) => frame[Math.floor(y / px)][Math.floor(x / px)]));
 }
+
+/** 填滿多邊形（pts = [[x, y], ...]），用來畫一束一束的頭髮 */
+export function poly(f, pts, color) {
+  const inside = (px, py) => {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (inside(x + 0.5, y + 0.5)) put(f, x, y, color);
+}
+
+/** 畫一條線（Bresenham） */
+export function line(f, x0, y0, x1, y1, color) {
+  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    put(f, x0, y0, color);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
+}

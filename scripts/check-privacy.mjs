@@ -13,7 +13,7 @@ import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 
 /** 可以公開的角色（要公開新角色時，把資料夾名稱加到這裡，也要改 .gitignore 和 tauri.conf.json） */
-export const PUBLIC_SKINS = ["default", "kanade"];
+export const PUBLIC_SKINS = ["default", "kanade", "shiori"];
 
 const staged = process.argv.includes("--staged");
 const files = execSync(staged ? "git diff --cached --name-only --diff-filter=ACMR" : "git ls-files", { encoding: "utf8" })
