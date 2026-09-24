@@ -136,8 +136,9 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
 
 // ---- 給前端呼叫的指令 ----
 
+/// 注意：一定要是 async。Windows 上在同步指令裡開新視窗會卡住，畫面變成一片空白。
 #[tauri::command]
-pub fn open_settings_window(app: AppHandle) {
+pub async fn open_settings_window(app: AppHandle) {
     open_settings(&app);
 }
 
