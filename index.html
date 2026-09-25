@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>desk-pet</title>
+    <link rel="stylesheet" href="/src/pet.css" />
+  </head>
+  <body>
+    <!-- 整個視窗是透明的，只有 .hit 的元素可以被點到（見 clickthrough.ts） -->
+    <div id="stage">
+      <!-- 台詞泡泡 -->
+      <div id="bubble" class="bubble hit hidden"></div>
+
+      <!-- Claude 對話泡泡（沒有金鑰時永遠不會出現） -->
+      <div id="chat" class="chat hit hidden">
+        <button class="chat-close" data-i18n-title="chat.close">×</button>
+        <div class="chat-log"></div>
+        <form>
+          <input type="text" data-i18n-placeholder="chat.placeholder" maxlength="500" />
+          <button type="submit" data-i18n="chat.send"></button>
+        </form>
+        <button class="chat-claude hidden"></button>
+      </div>
+
+      <!-- 右鍵小選單（文字在 main.ts 依語言填入） -->
+      <div id="menu" class="menu hit hidden">
+        <button data-action="chat"></button>
+        <button data-action="feed"></button>
+        <button data-action="pomodoro"></button>
+        <button data-action="claude"></button>
+        <button data-action="settings"></button>
+      </div>
+
+      <!-- 角色本體 -->
+      <div id="pet-wrap">
+        <canvas id="pet" class="hit"></canvas>
+        <div id="pomo" class="pomo hit hidden"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

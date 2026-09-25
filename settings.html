@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>desk-pet</title>
+    <link rel="stylesheet" href="/src/settings/settings.css" />
+  </head>
+  <body>
+    <!-- 文字都用 data-i18n 指定 key，實際內容在 src/common/i18n.ts -->
+    <nav id="tabs">
+      <button data-tab="todos" class="active" data-i18n="tab.todos"></button>
+      <button data-tab="pomodoro" data-i18n="tab.pomodoro"></button>
+      <button data-tab="reminders" data-i18n="tab.reminders"></button>
+      <button data-tab="general" data-i18n="tab.general"></button>
+      <button data-tab="lines" data-i18n="tab.lines"></button>
+      <button data-tab="skins" data-i18n="tab.skins"></button>
+      <button data-tab="claude" data-i18n="tab.claude"></button>
+      <button data-tab="about" data-i18n="tab.about"></button>
+    </nav>
+
+    <main>
+      <!-- ===== 待辦 ===== -->
+      <section id="tab-todos" class="active">
+        <form id="todo-form" class="row">
+          <input id="todo-input" type="text" data-i18n-placeholder="todo.placeholder" maxlength="200" />
+          <button type="submit" data-i18n="todo.add"></button>
+        </form>
+        <ul id="todo-list" class="list"></ul>
+        <p class="muted"><span id="todo-count"></span></p>
+        <button id="todo-clear" class="secondary" data-i18n="todo.clear"></button>
+      </section>
+
+      <!-- ===== 番茄鐘 ===== -->
+      <section id="tab-pomodoro">
+        <div id="pomo-display" class="big-timer">--:--</div>
+        <p id="pomo-phase" class="center muted"></p>
+        <div class="row center">
+          <button data-pomo="work" data-i18n="pomo.startWork"></button>
+          <button data-pomo="break" class="secondary" data-i18n="pomo.startBreak"></button>
+          <button data-pomo="stop" class="secondary" data-i18n="pomo.stop"></button>
+        </div>
+        <h3 data-i18n="pomo.timeSettings"></h3>
+        <label><span data-i18n="pomo.workMin"></span><input type="number" min="1" max="180" data-setting="pomodoro.workMin" /></label>
+        <label><span data-i18n="pomo.breakMin"></span><input type="number" min="1" max="60" data-setting="pomodoro.breakMin" /></label>
+        <label class="check"><input type="checkbox" data-setting="pomodoro.autoBreak" /> <span data-i18n="pomo.autoBreak"></span></label>
+      </section>
+
+      <!-- ===== 提醒 ===== -->
+      <section id="tab-reminders">
+        <form id="rem-form">
+          <label><span data-i18n="rem.text"></span><input id="rem-text" type="text" maxlength="200" data-i18n-placeholder="rem.textPlaceholder" required /></label>
+          <label><span data-i18n="rem.kind"></span>
+            <select id="rem-kind">
+              <option value="once" data-i18n="rem.once"></option>
+              <option value="daily" data-i18n="rem.daily"></option>
+            </select>
+          </label>
+          <label id="rem-once-label"><span data-i18n="rem.at"></span><input id="rem-datetime" type="datetime-local" /></label>
+          <label id="rem-daily-label" class="hidden"><span data-i18n="rem.dailyAt"></span><input id="rem-time" type="time" /></label>
+          <button type="submit" data-i18n="rem.add"></button>
+        </form>
+        <ul id="rem-list" class="list"></ul>
+      </section>
+
+      <!-- ===== 一般 ===== -->
+      <section id="tab-general">
+        <label><span data-i18n="gen.language"></span>
+          <select id="lang-select" data-setting="language"></select>
+        </label>
+        <label class="check"><input type="checkbox" id="autostart" /> <span data-i18n="gen.autostart"></span></label>
+        <label class="check"><input type="checkbox" data-setting="walkEnabled" /> <span data-i18n="gen.walk"></span></label>
+        <label class="check"><input type="checkbox" data-setting="perchEnabled" /> <span data-i18n="gen.perch"></span></label>
+        <label><span data-i18n="gen.talk"></span><input type="number" min="0" max="120" data-setting="talkIntervalMin" /></label>
+        <label><span data-i18n="gen.size"></span>
+          <select data-setting="petScale" data-type="number">
+            <option value="0.75" data-i18n="gen.small"></option>
+            <option value="1" data-i18n="gen.medium"></option>
+            <option value="1.25" data-i18n="gen.large"></option>
+          </select>
+        </label>
+        <h3 data-i18n="gen.activity"></h3>
+        <p class="muted" data-i18n="gen.activityNote"></p>
+        <label><span data-i18n="gen.busySec"></span><input type="number" min="5" max="600" data-setting="activity.busySec" /></label>
+        <label><span data-i18n="gen.awaySec"></span><input type="number" min="30" max="7200" data-setting="activity.awaySec" /></label>
+        <p class="muted" id="idle-now"></p>
+        <h3 data-i18n="gen.data"></h3>
+        <button id="open-data" class="secondary" data-i18n="gen.openData"></button>
+      </section>
+
+      <!-- ===== 台詞 ===== -->
+      <section id="tab-lines">
+        <p data-i18n="lines.note"></p>
+        <div class="row">
+          <button id="lines-open" class="secondary" data-i18n="lines.open"></button>
+          <button id="lines-reload" data-i18n="lines.reload"></button>
+          <button id="lines-reset" class="secondary" data-i18n="lines.reset"></button>
+        </div>
+        <table id="lines-table"></table>
+      </section>
+
+      <!-- ===== 角色 ===== -->
+      <section id="tab-skins">
+        <div id="skin-list" class="cards"></div>
+        <div class="row">
+          <button id="skins-open" class="secondary" data-i18n="skins.open"></button>
+          <button id="skins-reload" class="secondary" data-i18n="skins.reload"></button>
+          <button id="skins-guide" class="secondary" data-i18n="studio.guide"></button>
+        </div>
+
+        <!-- 角色工作室：三種做角色的方法 -->
+        <h3 data-i18n="studio.title"></h3>
+        <p class="muted" data-i18n="studio.intro"></p>
+
+        <details open>
+          <summary data-i18n="studio.fromImages"></summary>
+          <p class="muted" data-i18n="studio.fromImagesNote"></p>
+          <label><span data-i18n="studio.name"></span><input id="studio-name" type="text" maxlength="40" /></label>
+          <div id="studio-images" class="image-slots"></div>
+          <label><span data-i18n="studio.persona"></span>
+            <textarea id="studio-persona" rows="3" data-i18n-placeholder="studio.personaPlaceholder"></textarea>
+          </label>
+          <label><span data-i18n="studio.bio"></span>
+            <textarea id="studio-bio" rows="2"></textarea>
+          </label>
+          <button id="studio-create" data-i18n="studio.create"></button>
+        </details>
+
+        <details>
+          <summary data-i18n="studio.fromPixel"></summary>
+          <p class="muted" data-i18n="studio.fromPixelNote"></p>
+          <button id="studio-template" class="secondary" data-i18n="studio.template"></button>
+        </details>
+
+        <details>
+          <summary data-i18n="studio.fromFolder"></summary>
+          <p class="muted" data-i18n="studio.fromFolderNote"></p>
+          <button id="studio-import" class="secondary" data-i18n="studio.import"></button>
+        </details>
+      </section>
+
+      <!-- ===== Claude ===== -->
+      <section id="tab-claude">
+        <p><span data-i18n="claude.status"></span><strong id="key-status"></strong></p>
+        <p class="muted" data-i18n="claude.note"></p>
+        <form id="key-form" class="row">
+          <input id="key-input" type="password" placeholder="sk-ant-…" autocomplete="off" />
+          <button type="submit" data-i18n="claude.save"></button>
+        </form>
+        <button id="key-clear" class="secondary" data-i18n="claude.clear"></button>
+        <h3 data-i18n="claude.chatSettings"></h3>
+        <label class="check"><input type="checkbox" data-setting="claude.enabled" /> <span data-i18n="claude.enabled"></span></label>
+        <label><span data-i18n="claude.model"></span><input type="text" list="model-options" data-setting="claude.model" /></label>
+        <datalist id="model-options">
+          <option value="claude-sonnet-5"></option>
+          <option value="claude-opus-5"></option>
+          <option value="claude-haiku-4-5"></option>
+        </datalist>
+        <label><span data-i18n="claude.effort"></span>
+          <select data-setting="claude.effort">
+            <option value="low" data-i18n="claude.effortLow"></option>
+            <option value="medium" data-i18n="claude.effortMedium"></option>
+            <option value="high" data-i18n="claude.effortHigh"></option>
+          </select>
+        </label>
+        <h3 data-i18n="claude.app"></h3>
+        <p class="muted" data-i18n="claude.appNote"></p>
+        <label class="check"><input type="checkbox" data-setting="claude.handoff" /> <span data-i18n="claude.handoff"></span></label>
+        <button id="open-claude" class="secondary" data-i18n="claude.openNow"></button>
+      </section>
+
+      <!-- ===== 關於（目前角色的介紹） ===== -->
+      <section id="tab-about">
+        <div class="about">
+          <canvas id="about-img" width="32" height="32"></canvas>
+          <h2 id="about-name"></h2>
+          <p id="about-bio"></p>
+          <p class="muted"><span data-i18n="about.affection"></span>：<span id="about-affection"></span></p>
+          <p class="muted" data-i18n="about.controls"></p>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/settings/main.ts"></script>
+  </body>
+</html>
