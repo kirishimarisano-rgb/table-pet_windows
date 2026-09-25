@@ -121,7 +121,6 @@ npm run tauri build
 完成後，安裝檔在：
 
 - `src-tauri\target\release\bundle\nsis\desk-pet_0.1.0_x64-setup.exe`：一般安裝程式，**推薦用這個**
-- `src-tauri\target\release\bundle\msi\desk-pet_0.1.0_x64_zh-TW.msi`：MSI 安裝檔（實際檔名可能略有不同）
 
 ### 用 GitHub Actions 自動打包
 
