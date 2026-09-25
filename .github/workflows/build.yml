@@ -48,7 +48,7 @@ jobs:
       - name: 安裝前端套件
         run: npm ci
 
-      - name: 建置（產生 .exe 與 .msi）
+      - name: 建置（產生安裝檔 setup.exe）
         run: npx tauri build
 
       - name: 檢查安裝檔裡的內建角色與台詞
